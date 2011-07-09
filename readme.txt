@@ -13,9 +13,7 @@ Imports a Tumblr blog into a WordPress blog.
 * WP-Cron based background importing: start it up, then come back later to see how far it's gotten
 * Duplicate checking, will not create duplicate imported posts
 * Imports posts, drafts, and pages
-
-TODO: 
-* Media Sideloading
+* Media Sideloading (for audio, video, and image posts)
 
 == Installation ==
 

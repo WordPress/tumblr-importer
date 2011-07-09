@@ -3,7 +3,8 @@
 Plugin Name: Tumblr Importer
 Plugin URI: http://wordpress.org/extend/plugins/tumblr-importer/
 Description: Import posts from a Tumblr blog.
-Author: Otto42
+Author: wordpressdotorg
+Author URI: http://wordpress.org/
 Version: 0.1
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 */
@@ -11,8 +12,8 @@ License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 if ( !defined('WP_LOAD_IMPORTERS') && !defined('DOING_CRON') )
 	return;
 
-// Load Importer API
 require_once ABSPATH . 'wp-admin/includes/import.php';
+require_once ABSPATH . 'wp-admin/includes/admin.php';
 
 require_once 'class-wp-importer-cron.php';
 
@@ -37,16 +38,9 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 class Tumblr_Import extends WP_Importer_Cron {
 
 	/**
-	 * Constructor - makes a note of the start execution time for use later
+	 * Constructor
 	 */
 	function __construct() {
-		global $importer_started;
-		$importer_started = time();
-		if ( isset( $_GET['import'] ) && $_GET['import'] == 'tumblr' ) {
-			wp_enqueue_script('jquery');
-			//add_action('admin_head', array(&$this, 'admin_head'));
-		}
-		
 		parent::__construct();
 	}
 
@@ -158,6 +152,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 		<th><?php _e('Author Selection','tumblr-importer'); ?></th>
 		<th><?php _e('Action','tumblr-importer'); ?></th>
 		</tr></thead>
+		<tbody>
 		<?php
 		foreach ($this->blogs as $blog) {
 			$url = $blog['url'];
@@ -199,6 +194,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 			<?php
 		}
 		?>
+		</tbody>
 		</table>
 		<p><?php _e("Because Tumblr's servers are often overloaded, the importing process happens in the background. Thus, you will not see immediate results here. Come back to this page later to check on the importer's progress.",'tumblr-importer'); ?></p>
 		</div>
@@ -284,7 +280,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 		$imported_posts = $this->fetch_posts($url, $start, $count, $this->email, $this->password );
 		
 		if (!imported_posts) {
-			$this->error = _e('Problem communicating with Tumblr, retrying later','tumblr-importer');
+			$this->error = __('Problem communicating with Tumblr, retrying later','tumblr-importer');
 			return;
 		}
 		
@@ -305,12 +301,18 @@ class Tumblr_Import extends WP_Importer_Cron {
 				$post['post_author'] = $this->blog[$url]['post_author'];
 
 				$id = wp_insert_post( $post );
+				
+				$post['ID'] = $id;
+				
 				if ( !is_wp_error( $id ) ) {
 					if ( isset( $post['format'] ) ) set_post_format($id, $post['format']);
 
 					add_post_meta( $id, 'tumblr_'.$this->blog[$url]['name'].'_permalink', $post['tumblr_url'] );
 					add_post_meta( $id, 'tumblr_'.$this->blog[$url]['name'].'_id', $post['tumblr_id'] );
+					
+					$this->handle_sideload($post);
 				}
+				
 				$this->blog[$url]['posts_complete']++;
 				$this->save_vars();
 
@@ -337,7 +339,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 		$imported_posts = $this->fetch_posts($url, $start, $count, $this->email, $this->password, 'draft' );
 
 		if (!imported_posts) {
-			$this->error = _e('Problem communicating with Tumblr, retrying later','tumblr-importer');
+			$this->error = __('Problem communicating with Tumblr, retrying later','tumblr-importer');
 			return;
 		}
 		
@@ -378,7 +380,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 		$imported_pages = $this->fetch_pages($url, $this->email, $this->password );
 
 		if (!imported_pages) {
-			$this->error = _e('Problem communicating with Tumblr, retrying later','tumblr-importer');
+			$this->error = __('Problem communicating with Tumblr, retrying later','tumblr-importer');
 			return;
 		}
 
@@ -407,6 +409,90 @@ class Tumblr_Import extends WP_Importer_Cron {
 		$this->blog[$url]['progress'] = 'finish';
 	}
 	
+	function handle_sideload($post) {
+	
+		switch ( $post['format'] ) {
+		case 'image':		
+			if ( isset( $post['media']['src'] ) ) {
+				$img = media_sideload_image($post['media']['src'], $post['ID'], $post['post_title']);
+
+				if ( ! is_wp_error( $img ) ) {
+					$post['post_content'] = "<a href='{$post['media']['link']}'>{$img}</a>";
+					wp_update_post( $post );
+				}
+			}
+			break;
+		
+		case 'audio':
+			if ( isset( $post['media']['audio'] ) ) {
+				
+				// Download file to temp location
+				$tmp = download_url( $post['media']['audio'] );
+
+				$file_array['name'] = $post['media']['filename'];
+				$file_array['tmp_name'] = $tmp;
+
+				// If error storing temporarily, unlink
+				if ( is_wp_error( $tmp ) ) {
+					@unlink($file_array['tmp_name']);
+					$file_array['tmp_name'] = '';
+				} else {
+
+					// do the validation and storage stuff
+					$id = media_handle_sideload( $file_array, $post['ID'] );
+					// If error storing permanently, unlink
+					if ( is_wp_error($id) ) {
+						@unlink($file_array['tmp_name']);
+					} else {
+						$src = wp_get_attachment_url( $id );
+
+						// Finally check to make sure the file has been saved, then return the html
+						if ( ! empty($src) ) {
+							$html = "$src";
+							$post['post_content'] = $html;
+							wp_update_post( $post );
+						}
+					}
+				}
+			}
+			break;
+			
+		case 'video':
+			if ( isset( $post['media']['video'] ) ) {
+				
+				// Download file to temp location
+				$tmp = download_url( $post['media']['video'] );
+
+				$file_array['name'] = $post['media']['filename'];
+				$file_array['tmp_name'] = $tmp;
+
+				// If error storing temporarily, unlink
+				if ( is_wp_error( $tmp ) ) {
+					@unlink($file_array['tmp_name']);
+					$file_array['tmp_name'] = '';
+				} else {
+
+					// do the validation and storage stuff
+					$id = media_handle_sideload( $file_array, $post['ID'] );
+					// If error storing permanently, unlink
+					if ( is_wp_error($id) ) {
+						@unlink($file_array['tmp_name']);
+					} else {
+						$src = wp_get_attachment_url( $id );
+
+						// Finally check to make sure the file has been saved, then return the html
+						if ( ! empty($src) ) {
+							$html = "$src";
+							$post['post_content'] = $html;
+							wp_update_post( $post );
+						}
+					}
+				}
+			}
+			break;
+		}		
+	}
+	
 	/**
 	 * Fetch a list of blogs for a user
 	 *
@@ -426,7 +512,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 		// fetch the list
 		$out = wp_remote_post($url,$options);
 		if (wp_remote_retrieve_response_code($out) != 200) {
-			return new WP_Error('tumblr_error', __('Tumblr replied: ', 'tumblr-importer' ) . wp_remote_retrieve_body($out));
+			return new WP_Error('tumblr_error', __('Tumblr replied with an error: ', 'tumblr-importer' ) . wp_remote_retrieve_body($out));
 		}
 		$body = wp_remote_retrieve_body($out);
 
@@ -507,13 +593,13 @@ class Tumblr_Import extends WP_Importer_Cron {
 				case 'photo':
 					$post['format'] = 'image';
 					$post['post_title'] = strip_tags( (string) $tpost->{'photo-caption'} );
-					$src = (string) $tpost->{'photo-url'}[0];
-					$link =(string) $tpost->{'photo-link-url'};
-					$width = (string) $tpost['width'];
-					$height = (string) $tpost['height'];
+					$post['media']['src'] = (string) $tpost->{'photo-url'}[0];
+					$post['media']['link'] =(string) $tpost->{'photo-link-url'};
+					$post['media']['width'] = (string) $tpost['width'];
+					$post['media']['height'] = (string) $tpost['height'];
 					$content = '';
-					if ( !empty( $link ) ) $content .= "<a href='{$link}'>";
-					$content .= "<img src='{$src}' width='{$width}' height='{$height}' />";
+					if ( !empty( $post['media']['link'] ) ) $content .= "<a href='{$post['media']['link']}'>";
+					$content .= "<img src='{$post['media']['src']}' width='{$post['media']['width']}' height='{$post['media']['height']}' />";
 					if ( !empty( $link ) ) $content .= "</a>";
 					$post['post_content'] = $content;
 					break;
@@ -537,14 +623,27 @@ class Tumblr_Import extends WP_Importer_Cron {
 				case 'audio':
 					$post['format'] = 'audio';
 					$post['post_title'] = strip_tags( (string) $tpost->{'audio-caption'} );
-					$post['post_content'] = (string) $tpost->{'audio-player'};
-					$post['post_content'] .= (string) $tpost->{'authorized-download-url'};  
+					$post['media']['filename'] = basename( (string) $tpost->{'authorized-download-url'} ) . '.mp3';
+					$post['media']['audio'] = (string) $tpost->{'authorized-download-url'} .'?plead=please-dont-download-this-or-our-lawyers-wont-let-us-host-audio';
+					$post['post_content'] = (string) $tpost->{'authorized-download-url'};
 					break;
 				case 'video':
 					$post['format'] = 'video';
 					$post['post_title'] = strip_tags ( (string) $tpost->{'video-caption'} );
-					$post['post_content'] = (string) $tpost->{'video-player'}[0];
-					$post['post_content'] .= (string) $tpost->{'video-source'};
+					
+					if ( is_serialized( (string) $tpost->{'video-source'} ) ) {
+						if ( preg_match('|\'(http://.*video_file.*)\'|U', $tpost->{'video-player'}[0], $matches) ) {
+							$post['media']['video'] = $matches[1];
+							$val = unserialize( (string) $tpost->{'video-source'} );
+							$vidmeta = $val['o1'];
+							$post['media']['filename'] = basename($post['media']['video']) . '.' . $vidmeta['extension'];
+							$post['media']['width'] = $vidmeta['width'];
+							$post['media']['height'] = $vidmeta['height'];
+						}
+					} else {
+						$post['post_content'] = (string) $tpost->{'video-player'}[0];
+						$post['post_content'] .= (string) $tpost->{'video-source'};
+					}
 					break;
 				case 'regular':
 				default:
