@@ -30,6 +30,8 @@ Now handles titles properly for audio/video/image formats by leaving them empty.
 
 = 0.2 = 
 * The audio, video, and image formats no longer use the caption for the titles. Tumblr seems to facilitate putting all sorts of crazy stuff into the caption fields as part of their reblogging system. So instead, these types of posts will have no titles at all. Sorry, but Tumblr simply doesn't have any sort of title fields here to work with, and no data that can be used to "create" a title for them.
+* Minor debug error cleanup.
+* Sideloading now done on drafts and pages as well.
 
 = 0.1 =
 * First version, not meant to be used except for testing.
