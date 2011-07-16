@@ -5,7 +5,7 @@ Plugin URI: http://wordpress.org/extend/plugins/tumblr-importer/
 Description: Import posts from a Tumblr blog.
 Author: wordpressdotorg
 Author URI: http://wordpress.org/
-Version: 0.1
+Version: 0.2
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 */
 
@@ -99,11 +99,11 @@ class Tumblr_Import extends WP_Importer_Cron {
 			<table class="form-table">
 				<tr>
 					<th scope="row"><label for='email'><?php _e('Email:','tumblr-importer'); ?></label></label></th>
-					<td><input type='text' class="regular-text" name='email' value='<?php echo esc_attr($this->email); ?>' /></td>
+					<td><input type='text' class="regular-text" name='email' value='<?php if (isset($this->email)) echo esc_attr($this->email); ?>' /></td>
 				</tr>
 				<tr>
 					<th scope="row"><label for='email'><?php _e('Password:','tumblr-importer'); ?></label></label></th>
-					<td><input type='password' class="regular-text" name='password' value='<?php echo esc_attr($this->password); ?>' /></td>
+					<td><input type='password' class="regular-text" name='password' value='<?php if (isset($this->password)) echo esc_attr($this->password); ?>' /></td>
 				</tr>
 			</table>
 			<p class='submit'>
@@ -154,6 +154,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 		</tr></thead>
 		<tbody>
 		<?php
+		$style = '';
 		foreach ($this->blogs as $blog) {
 			$url = $blog['url'];
 			$style = ( 'alternate' == $style ) ? '' : 'alternate';
@@ -363,6 +364,8 @@ class Tumblr_Import extends WP_Importer_Cron {
 
 					add_post_meta( $id, 'tumblr_'.$this->blog[$url]['name'].'_permalink', $post['tumblr_url'] );
 					add_post_meta( $id, 'tumblr_'.$this->blog[$url]['name'].'_id', $post['tumblr_id'] );
+					
+					$this->handle_sideload($post);
 				}
 
 				$this->blog[$url]['drafts_complete']++;
@@ -400,6 +403,8 @@ class Tumblr_Import extends WP_Importer_Cron {
 				$id = wp_insert_post( $post );
 				if ( !is_wp_error( $id ) ) {
 					add_post_meta( $id, 'tumblr_'.$this->blog[$url]['name'].'_permalink', $post['tumblr_url'] );
+					
+					$this->handle_sideload($post);
 				}
 
 				$this->blog[$url]['pages_complete']++;
@@ -592,7 +597,6 @@ class Tumblr_Import extends WP_Importer_Cron {
 			switch ((string) $tpost['type']) {
 				case 'photo':
 					$post['format'] = 'image';
-					$post['post_title'] = strip_tags( (string) $tpost->{'photo-caption'} );
 					$post['media']['src'] = (string) $tpost->{'photo-url'}[0];
 					$post['media']['link'] =(string) $tpost->{'photo-link-url'};
 					$post['media']['width'] = (string) $tpost['width'];
@@ -602,6 +606,8 @@ class Tumblr_Import extends WP_Importer_Cron {
 					$content .= "<img src='{$post['media']['src']}' width='{$post['media']['width']}' height='{$post['media']['height']}' />";
 					if ( !empty( $link ) ) $content .= "</a>";
 					$post['post_content'] = $content;
+					$post['post_content'] .= "\n\n" . (string) $tpost->{'photo-caption'};
+					$post['post_title'] = '';
 					break;
 				case 'quote':
 					$post['format'] = 'quote';
@@ -622,15 +628,14 @@ class Tumblr_Import extends WP_Importer_Cron {
 					break;
 				case 'audio':
 					$post['format'] = 'audio';
-					$post['post_title'] = strip_tags( (string) $tpost->{'audio-caption'} );
 					$post['media']['filename'] = basename( (string) $tpost->{'authorized-download-url'} ) . '.mp3';
 					$post['media']['audio'] = (string) $tpost->{'authorized-download-url'} .'?plead=please-dont-download-this-or-our-lawyers-wont-let-us-host-audio';
 					$post['post_content'] = (string) $tpost->{'authorized-download-url'};
+					$post['post_content'] .= "\n\n" . (string) $tpost->{'audio-caption'};
+					$post['post_title'] = '';
 					break;
 				case 'video':
 					$post['format'] = 'video';
-					$post['post_title'] = strip_tags ( (string) $tpost->{'video-caption'} );
-					
 					if ( is_serialized( (string) $tpost->{'video-source'} ) ) {
 						if ( preg_match('|\'(http://.*video_file.*)\'|U', $tpost->{'video-player'}[0], $matches) ) {
 							$post['media']['video'] = $matches[1];
@@ -644,6 +649,8 @@ class Tumblr_Import extends WP_Importer_Cron {
 						$post['post_content'] = (string) $tpost->{'video-player'}[0];
 						$post['post_content'] .= (string) $tpost->{'video-source'};
 					}
+					$post['post_content'] .= "\n\n" . (string) $tpost->{'video-caption'};
+					$post['post_title'] = '';
 					break;
 				case 'regular':
 				default:
