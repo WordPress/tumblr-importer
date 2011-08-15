@@ -5,7 +5,7 @@ Plugin URI: http://wordpress.org/extend/plugins/tumblr-importer/
 Description: Import posts from a Tumblr blog.
 Author: wordpressdotorg
 Author URI: http://wordpress.org/
-Version: 0.2
+Version: 0.3
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 */
 
@@ -426,6 +426,19 @@ class Tumblr_Import extends WP_Importer_Cron {
 					wp_update_post( $post );
 				}
 			}
+			
+			if ( isset( $post['gallery'] ) ) {
+				foreach ($post['gallery'] as $photo) {
+					$img = media_sideload_image($photo['src'], $post['ID'], $photo['caption']);
+
+					if ( ! is_wp_error( $img ) ) {
+						$post['post_content'] .= "{$img}";
+					}
+				}
+				
+				wp_update_post( $post );
+			}
+			
 			break;
 		
 		case 'audio':
@@ -608,6 +621,17 @@ class Tumblr_Import extends WP_Importer_Cron {
 					$post['post_content'] = $content;
 					$post['post_content'] .= "\n\n" . (string) $tpost->{'photo-caption'};
 					$post['post_title'] = '';
+					
+					if ( !empty( $tpost->{'photoset'} ) ) {
+						foreach ( $tpost->{'photoset'}->{'photo'} as $photo ) {
+							$post['gallery'][] = array (
+								'src'=>$photo->{'photo-url'}[0],
+								'width'=>$photo['width'],
+								'height'=>$photo['height'],
+								'caption'=>$photo['caption'],
+							);
+						}
+					}
 					break;
 				case 'quote':
 					$post['format'] = 'quote';
@@ -645,12 +669,31 @@ class Tumblr_Import extends WP_Importer_Cron {
 							$post['media']['width'] = $vidmeta['width'];
 							$post['media']['height'] = $vidmeta['height'];
 						}
+					} else if ( false !== strpos( (string) $tpost->{'video-source'}, 'embed' ) ) {
+						if ( preg_match_all('/<embed (.+?)>/', (string) $tpost->{'video-source'}, $matches) ) {
+							foreach ($matches[1] as $match) {
+								foreach ( wp_kses_hair($match, array('http')) as $attr)
+									$embed[$attr['name']] = $attr['value'];
+							}
+							
+							// special case for weird youtube vids
+							$embed['src'] = preg_replace('|http://www.youtube.com/v/([a-zA-Z0-9_]+).*|i', 'http://www.youtube.com/watch?v=$1', $embed['src']);
+							
+							// TODO find other special cases, since tumblr is full of them
+							
+							$post['post_content'] = $embed['src'];
+						}
+					
 					} else {
 						$post['post_content'] = (string) $tpost->{'video-player'}[0];
 						$post['post_content'] .= (string) $tpost->{'video-source'};
 					}
 					$post['post_content'] .= "\n\n" . (string) $tpost->{'video-caption'};
 					$post['post_title'] = '';
+					break;
+				case 'answer':
+					$post['post_title'] = (string) $tpost->{'question'};
+					$post['post_content'] = (string) $tpost->{'answer'};
 					break;
 				case 'regular':
 				default:

@@ -48,7 +48,7 @@ class WP_Importer_Cron extends WP_Importer {
 	
 	// add the once every three minute schedule
 	function importer_schedule( $schedules ) {
-		$schedules['everythreeminutes'] = array( 'interval' => 180, 'display' => __('Every Three Minutes') );
+		$schedules['everythreeminutes'] = array( 'interval' => 60, 'display' => __('Every Minute') );
 		return $schedules;
 	}
 	
