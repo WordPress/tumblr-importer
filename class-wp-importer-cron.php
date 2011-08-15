@@ -48,14 +48,14 @@ class WP_Importer_Cron extends WP_Importer {
 	
 	// add the once every three minute schedule
 	function importer_schedule( $schedules ) {
-		$schedules['everythreeminutes'] = array( 'interval' => 60, 'display' => __('Every Minute') );
+		$schedules['everyminute'] = array( 'interval' => 60, 'display' => __('Every Minute') );
 		return $schedules;
 	}
 	
 	// schedule an importer job
 	function schedule_import_job( $function_name, $args=array() ) {
 		$this->callback = $function_name;
-		wp_schedule_event(time(), 'everythreeminutes', 'wp_cron_importer_hook' , $args);
+		wp_schedule_event(time(), 'everyminute', 'wp_cron_importer_hook' , $args);
 	}
 	
 	// internal callback that checks for a finished import and clears old jobs out
