@@ -1,8 +1,8 @@
 === Tumblr Importer ===
-Contributors: Otto42, wordpressdotorg
+Contributors: Otto42, wordpressdotorg, dd32
 Tags: tumblr, import
 Requires at least: 3.2
-Tested up to: 3.2
+Tested up to: 3.3
 Stable tag: trunk
 
 == Description ==
@@ -24,6 +24,12 @@ Imports a Tumblr blog into a WordPress blog.
 == Upgrade Notice ==
 
 == Changelog ==
+
+= 0.4 =
+* Map multi-image posts to Gallery post format
+* Import Tags
+* Import Media to server (Images, Audio, Custom uploaded Video's)
+* Set the date on Media imports for easier management
 
 = 0.3 = 
 * Handle multi-image posts

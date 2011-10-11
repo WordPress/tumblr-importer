@@ -5,7 +5,7 @@ Plugin URI: http://wordpress.org/extend/plugins/tumblr-importer/
 Description: Import posts from a Tumblr blog.
 Author: wordpressdotorg
 Author URI: http://wordpress.org/
-Version: 0.3
+Version: 0.4
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 */
 
@@ -17,16 +17,22 @@ require_once ABSPATH . 'wp-admin/includes/admin.php';
 
 require_once 'class-wp-importer-cron.php';
 
-/** 
- * Language handling
+/**
+ * Tumblr Importer Initialisation routines
+ *
+ * @package WordPress
+ * @subpackage Importer
  */
 function tumblr_importer_init() {
+	global $tumblr_import;
 	load_plugin_textdomain( 'tumblr-importer', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+
+	$tumblr_import = new Tumblr_Import();
+	register_importer('tumblr', __('Tumblr', 'tumblr-importer'), __('Import posts from a Tumblr blog.', 'tumblr-importer'), array ($tumblr_import, 'start'));
+	if ( !defined('TUMBLR_MAX_IMPORT') )
+		define ('TUMBLR_MAX_IMPORT', 20);
 }
 add_action( 'init', 'tumblr_importer_init' );
-
-
-define ('TUMBLR_MAX_IMPORT',20);
 
 /**
  * Tumblr Importer
@@ -211,7 +217,12 @@ class Tumblr_Import extends WP_Importer_Cron {
 			$this->error = __('The specified blog cannot be found.', 'tumblr-importer');
 			return;
 		}	
-	
+
+		if ( !empty($this->blog[$url]['progress']) ) {
+			$this->error = __('This blog is currently being imported.', 'tumblr-importer');
+			return;
+		}
+
 		$this->blog[$url]['progress'] = 'start';
 		$this->blog[$url]['post_author'] = (int) $_POST['post_author'];
 		
@@ -219,7 +230,6 @@ class Tumblr_Import extends WP_Importer_Cron {
 	}
 	
 	function restart() {
-		global $wpdb;
 		delete_option(get_class($this));
 		wp_redirect('?import=tumblr');
 	}
@@ -280,7 +290,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 		
 		$imported_posts = $this->fetch_posts($url, $start, $count, $this->email, $this->password );
 		
-		if (!imported_posts) {
+		if ( empty($imported_posts) ) {
 			$this->error = __('Problem communicating with Tumblr, retrying later','tumblr-importer');
 			return;
 		}
@@ -301,17 +311,34 @@ class Tumblr_Import extends WP_Importer_Cron {
 
 				$post['post_author'] = $this->blog[$url]['post_author'];
 
+				if ( empty($post['post_title']) ) { 
+					// for empty titles, Attempt to use 100char of the content
+					$content_excerpt = wp_html_excerpt($post['post_content'], 100);
+					if ( ! empty($content_excerpt) ) {
+						$post['post_title'] = $content_excerpt;
+					// And failing the content, use the slug.
+					} elseif ( ! empty($post['post_name']) ) {
+						$post['post_title'] = $post['post_name'];
+					}
+				}
+
 				$id = wp_insert_post( $post );
 				
-				$post['ID'] = $id;
-				
 				if ( !is_wp_error( $id ) ) {
+					$post['ID'] = $id; // Allows for the media importing to wp_update_post()
 					if ( isset( $post['format'] ) ) set_post_format($id, $post['format']);
 
+					// @todo: Add basename of the permalink as a 404 redirect handler for when a custom domain has been brought accross
 					add_post_meta( $id, 'tumblr_'.$this->blog[$url]['name'].'_permalink', $post['tumblr_url'] );
 					add_post_meta( $id, 'tumblr_'.$this->blog[$url]['name'].'_id', $post['tumblr_id'] );
-					
-					$this->handle_sideload($post);
+					$import_result = $this->handle_sideload($post);
+
+					// Handle failed imports.. If empty content and failed to import media..
+					if ( is_wp_error($import_result) ) {
+						if ( empty($post['post_content']) ) {
+							wp_delete_post($id, true);
+						}
+					}
 				}
 				
 				$this->blog[$url]['posts_complete']++;
@@ -339,7 +366,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 
 		$imported_posts = $this->fetch_posts($url, $start, $count, $this->email, $this->password, 'draft' );
 
-		if (!imported_posts) {
+		if ( empty($imported_posts) ) {
 			$this->error = __('Problem communicating with Tumblr, retrying later','tumblr-importer');
 			return;
 		}
@@ -360,6 +387,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 
 				$id = wp_insert_post( $post );
 				if ( !is_wp_error( $id ) ) {
+					$post['ID'] = $id;
 					if ( isset( $post['format'] ) ) set_post_format($id, $post['format']);
 
 					add_post_meta( $id, 'tumblr_'.$this->blog[$url]['name'].'_permalink', $post['tumblr_url'] );
@@ -382,7 +410,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 
 		$imported_pages = $this->fetch_pages($url, $this->email, $this->password );
 
-		if (!imported_pages) {
+		if ( empty($imported_pages) ) {
 			$this->error = __('Problem communicating with Tumblr, retrying later','tumblr-importer');
 			return;
 		}
@@ -403,7 +431,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 				$id = wp_insert_post( $post );
 				if ( !is_wp_error( $id ) ) {
 					add_post_meta( $id, 'tumblr_'.$this->blog[$url]['name'].'_permalink', $post['tumblr_url'] );
-					
+					$post['ID'] = $id;
 					$this->handle_sideload($post);
 				}
 
@@ -413,102 +441,102 @@ class Tumblr_Import extends WP_Importer_Cron {
 		}		
 		$this->blog[$url]['progress'] = 'finish';
 	}
-	
-	function handle_sideload($post) {
-	
-		switch ( $post['format'] ) {
-		case 'image':		
-			if ( isset( $post['media']['src'] ) ) {
-				$img = media_sideload_image($post['media']['src'], $post['ID'], $post['post_title']);
-
-				if ( ! is_wp_error( $img ) ) {
-					$post['post_content'] = "<a href='{$post['media']['link']}'>{$img}</a>";
-					wp_update_post( $post );
-				}
+	function handle_sideload_import($post, $source, $description = '', $filename = false) {
+		// Make a HEAD request to get the filename:
+		if ( empty($filename) ) {
+			$head = wp_remote_request( $source, array('method' => 'HEAD') );
+			if ( !empty($head['headers']['location']) ) {
+				$source = $head['headers']['location'];
+				$filename = preg_replace('!\?.*!', '', basename($source) ); // Strip off the Query vars
 			}
-			
-			if ( isset( $post['gallery'] ) ) {
-				foreach ($post['gallery'] as $photo) {
-					$img = media_sideload_image($photo['src'], $post['ID'], $photo['caption']);
+		}
 
-					if ( ! is_wp_error( $img ) ) {
-						$post['post_content'] .= "{$img}";
-					}
+		// Download file to temp location
+		$tmp = download_url( $source );
+		if ( is_wp_error($tmp) )
+			return $tmp;
+
+		$file_array['name'] = !empty($filename) ? $filename : basename($tmp);
+		$file_array['tmp_name'] = $tmp;
+		// do the validation and storage stuff
+		$id = media_handle_sideload( $file_array, $post['ID'], $description, array( 'post_excerpt' => $description ) );
+
+		if ( $id && ! is_wp_error($id) ) {
+			// Update the date/time on the attachment to that of the Tumblr post.
+			$attachment = get_post($id, ARRAY_A);
+			foreach ( array('post_date', 'post_date_gmt', 'post_modified', 'post_modified_gmt') as $field ) {
+				if ( isset($post[ $field]) )
+					$attachment[ $field ] = $post[ $field ];
+			}
+			wp_update_post($attachment);
+		}
+
+		// If error storing permanently, unlink
+		if ( is_wp_error($id) )
+			@unlink($file_array['tmp_name']);
+		return $id;
+	}
+
+	function handle_sideload($post) {
+
+		if ( empty( $post['format'] ) )
+			return; // Nothing to import.
+
+		switch ( $post['format'] ) {
+		case 'gallery':
+			if ( !empty( $post['gallery'] ) ) {
+				foreach ( $post['gallery'] as $i => $photo ) {
+					$id = $this->handle_sideload_import( $post, (string)$photo['src'], (string)$photo['caption']);
+					if ( is_wp_error($id) )
+						return $id;
 				}
-				
-				wp_update_post( $post );
+				$post['post_content'] = "[gallery]\n" . $post['post_content'];
+				wp_update_post($post);
+				break; // If we processed a gallery, break, otherwise let it fall through to the Image handler
+			}
+
+		case 'image':
+			if ( isset( $post['media']['src'] ) ) {
+				$id = $this->handle_sideload_import( $post, (string)$post['media']['src'], (string)$post['post_title']);
+				if ( is_wp_error($id) )
+					return $id;
+
+				$link = !empty($post['media']['link']) ? $post['media']['link'] : null;
+				// image_send_to_editor has a filter to wrap in a shortcode.
+				$post['post_content'] = get_image_send_to_editor($id, (string)$post['post_title'], (string)$post['post_title'], 'none', $link, true, 'large' );
+				//$post['post_content'] .= "\n" . $post['post_content']; // the [caption] shortcode doesn't allow HTML, but this might have some extra markup
+				wp_update_post($post);
 			}
 			
 			break;
 		
-		case 'audio':
+			case 'audio':
+			// Handle Tumblr Hosted Audio
 			if ( isset( $post['media']['audio'] ) ) {
-				
-				// Download file to temp location
-				$tmp = download_url( $post['media']['audio'] );
-
-				$file_array['name'] = $post['media']['filename'];
-				$file_array['tmp_name'] = $tmp;
-
-				// If error storing temporarily, unlink
-				if ( is_wp_error( $tmp ) ) {
-					@unlink($file_array['tmp_name']);
-					$file_array['tmp_name'] = '';
-				} else {
-
-					// do the validation and storage stuff
-					$id = media_handle_sideload( $file_array, $post['ID'] );
-					// If error storing permanently, unlink
-					if ( is_wp_error($id) ) {
-						@unlink($file_array['tmp_name']);
-					} else {
-						$src = wp_get_attachment_url( $id );
-
-						// Finally check to make sure the file has been saved, then return the html
-						if ( ! empty($src) ) {
-							$html = "$src";
-							$post['post_content'] = $html;
-							wp_update_post( $post );
-						}
-					}
-				}
+				$id = $this->handle_sideload_import( $post, (string)$post['media']['audio'], $post['post_title'], (string)$post['media']['filename'] );
+				if ( is_wp_error($id) )
+					return $id;
+				$post['post_content'] = wp_get_attachment_link($id) . "\n" . $post['post_content'];
+				wp_update_post($post);
 			}
 			break;
 			
 		case 'video':
+			// Handle Tumblr hosted video
 			if ( isset( $post['media']['video'] ) ) {
-				
-				// Download file to temp location
-				$tmp = download_url( $post['media']['video'] );
+				$id = $this->handle_sideload_import( $post, (string)$post['media']['video'], $post['post_title'], (string)$post['media']['filename'] );
+				if ( is_wp_error($id) )
+					return $id;
 
-				$file_array['name'] = $post['media']['filename'];
-				$file_array['tmp_name'] = $tmp;
-
-				// If error storing temporarily, unlink
-				if ( is_wp_error( $tmp ) ) {
-					@unlink($file_array['tmp_name']);
-					$file_array['tmp_name'] = '';
-				} else {
-
-					// do the validation and storage stuff
-					$id = media_handle_sideload( $file_array, $post['ID'] );
-					// If error storing permanently, unlink
-					if ( is_wp_error($id) ) {
-						@unlink($file_array['tmp_name']);
-					} else {
-						$src = wp_get_attachment_url( $id );
-
-						// Finally check to make sure the file has been saved, then return the html
-						if ( ! empty($src) ) {
-							$html = "$src";
-							$post['post_content'] = $html;
-							wp_update_post( $post );
-						}
-					}
-				}
+				// @TODO: Check/change this to embed the imported video.
+				$post['post_content'] = wp_get_attachment_link($id) . "\n" . $post['post_content'];
+				wp_update_post($post);
 			}
+			// Else, Check to see if the url embedded is handled by oEmbed (or not)
 			break;
-		}		
+		}
+
+		return true; // all processed
 	}
 	
 	/**
@@ -604,6 +632,11 @@ class Tumblr_Import extends WP_Importer_Cron {
 			$post['post_date_gmt'] = date( 'Y-m-d H:i:s', strtotime ( (string) $tpost['date-gmt'] ) );
 			$post['post_name'] = (string) $tpost['slug'];
 			if ( isset($tpost['private']) ) $post['private'] = (string) $tpost['private'];
+			if ( isset($tpost->{'tag'}) ) {
+				$post['tags_input'] = array();
+				foreach ( $tpost->{'tag'} as $tag )
+					$post['tags_input'][] = rtrim( (string) $tag, ','); // Strip trailing Commas off it too.
+			}
 
 			// set the various post info for each special format tumblr offers
 			// TODO reorg this as needed
@@ -614,15 +647,9 @@ class Tumblr_Import extends WP_Importer_Cron {
 					$post['media']['link'] =(string) $tpost->{'photo-link-url'};
 					$post['media']['width'] = (string) $tpost['width'];
 					$post['media']['height'] = (string) $tpost['height'];
-					$content = '';
-					if ( !empty( $post['media']['link'] ) ) $content .= "<a href='{$post['media']['link']}'>";
-					$content .= "<img src='{$post['media']['src']}' width='{$post['media']['width']}' height='{$post['media']['height']}' />";
-					if ( !empty( $link ) ) $content .= "</a>";
-					$post['post_content'] = $content;
-					$post['post_content'] .= "\n\n" . (string) $tpost->{'photo-caption'};
-					$post['post_title'] = '';
-					
+					$post['post_content'] = (string) $tpost->{'photo-caption'};
 					if ( !empty( $tpost->{'photoset'} ) ) {
+						$post['format'] = 'gallery';
 						foreach ( $tpost->{'photoset'}->{'photo'} as $photo ) {
 							$post['gallery'][] = array (
 								'src'=>$photo->{'photo-url'}[0],
@@ -654,12 +681,13 @@ class Tumblr_Import extends WP_Importer_Cron {
 					$post['format'] = 'audio';
 					$post['media']['filename'] = basename( (string) $tpost->{'authorized-download-url'} ) . '.mp3';
 					$post['media']['audio'] = (string) $tpost->{'authorized-download-url'} .'?plead=please-dont-download-this-or-our-lawyers-wont-let-us-host-audio';
-					$post['post_content'] = (string) $tpost->{'authorized-download-url'};
-					$post['post_content'] .= "\n\n" . (string) $tpost->{'audio-caption'};
-					$post['post_title'] = '';
+					$post['post_content'] = (string) $tpost->{'audio-player'} . "\n" . (string) $tpost->{'audio-caption'};
+					if ( !empty($tpost->{'id3-artist'}) )
+						$post['post_title'] = $tpost->{'id3-artist'} . ' - ' . $tpost->{'id3-title'};
 					break;
 				case 'video':
 					$post['format'] = 'video';
+					$post['post_content'] = '';
 					if ( is_serialized( (string) $tpost->{'video-source'} ) ) {
 						if ( preg_match('|\'(http://.*video_file.*)\'|U', $tpost->{'video-player'}[0], $matches) ) {
 							$post['media']['video'] = $matches[1];
@@ -685,11 +713,12 @@ class Tumblr_Import extends WP_Importer_Cron {
 						}
 					
 					} else {
-						$post['post_content'] = (string) $tpost->{'video-player'}[0];
+						// @todo: See if the video-source is going to be oEmbed'able before adding the flash player
+						// 1 Seems to be "original" size, with 0 being set otherwise.
+						$post['post_content'] .= isset($tpost->{'video-player'}[1]) ? $tpost->{'video-player'}[1] : (string) $tpost->{'video-player'}[0];
 						$post['post_content'] .= (string) $tpost->{'video-source'};
 					}
-					$post['post_content'] .= "\n\n" . (string) $tpost->{'video-caption'};
-					$post['post_title'] = '';
+					$post['post_content'] .= "\n" . (string) $tpost->{'video-caption'};
 					break;
 				case 'answer':
 					$post['post_title'] = (string) $tpost->{'question'};
@@ -732,12 +761,14 @@ class Tumblr_Import extends WP_Importer_Cron {
 
 		$tpages = $xml->pages;
 		$pages = array();
-
 		foreach($tpages->page as $tpage) {
-			if ( !empty($tpage['title']) ) $page['post_title'] = (string) $tpage['title'];
-			else if (!empty($tpage['link-title']) ) $page['post_title'] = (string) $tpage['link-title'];
-			else $page['post_title'] = '';
-			$page['post_name'] = str_replace( $url,'',(string) $tpage['url'] );
+			if ( !empty($tpage['title']) )
+				$page['post_title'] = (string) $tpage['title'];
+			else if (!empty($tpage['link-title']) )
+				$page['post_title'] = (string) $tpage['link-title'];
+			else
+				$page['post_title'] = '';
+			$page['post_name'] = str_replace( $url, '', (string) $tpage['url'] );
 			$page['post_content'] = (string) $tpage;
 			$page['tumblr_url'] = (string) $tpage['url'];
 			$pages[] = $page;
@@ -747,8 +778,3 @@ class Tumblr_Import extends WP_Importer_Cron {
 	}
 }
 }
-
-
-$tumblr_import = new Tumblr_Import();
-
-register_importer('tumblr', __('Tumblr', 'tumblr-importer'), __('Import posts from a Tumblr blog.', 'tumblr-importer'), array ($tumblr_import, 'start'));
