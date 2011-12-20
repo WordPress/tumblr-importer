@@ -290,7 +290,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 		
 		$imported_posts = $this->fetch_posts($url, $start, $count, $this->email, $this->password );
 		
-		if ( empty($imported_posts) ) {
+		if ( false === $imported_posts ) {
 			$this->error = __('Problem communicating with Tumblr, retrying later','tumblr-importer');
 			return;
 		}
@@ -410,7 +410,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 
 		$imported_pages = $this->fetch_pages($url, $this->email, $this->password );
 
-		if ( empty($imported_pages) ) {
+		if ( false === $imported_pages ) {
 			$this->error = __('Problem communicating with Tumblr, retrying later','tumblr-importer');
 			return;
 		}
