@@ -510,7 +510,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 
 				$link = !empty($post['media']['link']) ? $post['media']['link'] : null;
 				// image_send_to_editor has a filter to wrap in a shortcode.
-				$post['post_content'] = get_image_send_to_editor($id, (string)$post['post_title'], (string)$post['post_title'], 'none', $link, true, 'large' );
+				$post['post_content'] = get_image_send_to_editor($id, (string)$post['post_title'], (string)$post['post_title'], 'none', $link, true, 'full' );
 				//$post['post_content'] .= "\n" . $post['post_content']; // the [caption] shortcode doesn't allow HTML, but this might have some extra markup
 				wp_update_post($post);
 			}
