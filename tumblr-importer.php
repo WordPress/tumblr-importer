@@ -5,7 +5,7 @@ Plugin URI: http://wordpress.org/extend/plugins/tumblr-importer/
 Description: Import posts from a Tumblr blog.
 Author: wordpressdotorg
 Author URI: http://wordpress.org/
-Version: 0.4
+Version: 0.5
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 */
 
@@ -441,6 +441,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 		}		
 		$this->blog[$url]['progress'] = 'finish';
 	}
+	
 	function handle_sideload_import($post, $source, $description = '', $filename = false) {
 		// Make a HEAD request to get the filename:
 		if ( empty($filename) ) {
@@ -449,6 +450,12 @@ class Tumblr_Import extends WP_Importer_Cron {
 				$source = $head['headers']['location'];
 				$filename = preg_replace('!\?.*!', '', basename($source) ); // Strip off the Query vars
 			}
+		}
+		
+		// still empty? Darned inconsistent tumblr...
+		if ( empty($filename) ) {
+			$path = parse_url($source,PHP_URL_PATH);
+			$filename = basename($path);
 		}
 
 		// Download file to temp location

@@ -24,6 +24,8 @@ Imports a Tumblr blog into a WordPress blog.
 == Upgrade Notice ==
 
 == Changelog ==
+= 0.5 =
+* Fix edge cases for tumblr photos where tumblr isn't returning expected headers for filenames
 
 = 0.4 =
 * Map multi-image posts to Gallery post format
