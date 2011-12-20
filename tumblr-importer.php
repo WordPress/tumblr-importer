@@ -93,7 +93,8 @@ class Tumblr_Import extends WP_Importer_Cron {
 	
 	function greet($error=null) {
 		
-		if ( !empty( $error ) ) echo "<div class='error'>{$error}</div>";
+		if ( !empty( $error ) )
+			echo "<div class='error'><p>{$error}</p></div>";
 		?>
 		
 		<div class='wrap'><?php echo screen_icon(); ?>
@@ -141,7 +142,8 @@ class Tumblr_Import extends WP_Importer_Cron {
 	
 	function show_blogs($error=null) {
 	
-		if ( !empty( $error ) ) echo "<div class='error'>{$error}</div>";
+		if ( !empty( $error ) )
+			echo "<div class='error'><p>{$error}</p></div>";
 		?>
 		<div class='wrap'><?php echo screen_icon(); ?>
 		<h2><?php _e('Import Tumblr', 'tumblr-importer'); ?></h2>
