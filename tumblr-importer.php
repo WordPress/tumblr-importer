@@ -585,7 +585,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 			case 200: // OK
 				break;
 			default:
-				$_error = sprintf( __( 'Tumblr replied with an error: %s', 'tumblr-importer' ). wp_remote_retrieve_body( $out ) );
+				$_error = sprintf( __( 'Tumblr replied with an error: %s', 'tumblr-importer' ), wp_remote_retrieve_body( $out ) );
 				return new WP_Error('tumblr_error', $_error );
 			
 		}
