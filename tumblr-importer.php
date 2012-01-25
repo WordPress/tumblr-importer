@@ -59,12 +59,10 @@ class Tumblr_Import extends WP_Importer_Cron {
 		
 		if ( isset( $_POST['email'] ) && isset( $_POST['password'] ) ) {
 			$this->check_credentials();
-		}
-		
+		}	
 		if ( isset( $_POST['blogurl'] ) ) {
 			$this->start_blog_import();
 		}
-		
 		if ( isset( $this->blogs ) ) {
 			$this->show_blogs($this->error);
 		} else {
@@ -182,9 +180,9 @@ class Tumblr_Import extends WP_Importer_Cron {
 			if ( empty( $this->blog[$url]['progress'] ) ) {
 				$submit = "<input type='submit' value='". __('Import this blog','tumblr-importer') ."' />";
 			} else if ( $this->blog[$url]['progress'] == 'finish' ) {
-				$submit = "<input type='button' disabled='disabled' value='". __('Finished!','tumblr-importer') ."' />";
+				$submit = '<img src="' . admin_url( 'images/yes.png' ) . '" style="vertical-align: top; padding: 0 4px;" alt="' . __( 'Finished!', 'tumblr-importer' ) . '" title="' . __( 'Finished!', 'tumblr-importer' ) . '" /><span>' . __( 'Finished!', 'tumblr-importer' ) . '</span>';
 			} else {
-				$submit = "<input type='button' disabled='disabled' value='". __('In Progress','tumblr-importer') ."' />";
+				$submit = '<img src="' . admin_url( 'images/loading.gif' ) . '" style="vertical-align: top; padding: 0 4px;" alt="' . __( 'In Progress', 'tumblr-importer' ) . '" title="' . __( 'In Progress', 'tumblr-importer' ) . '" /><span>' . __( 'In Progress', 'tumblr-importer' ) . '</span>';
 				// Just a little js page reload to show progress if we're in the in-progress phase of the import.
 				$submit .= "<script type='text/javascript'>setTimeout( 'window.location.href = window.location.href', 15000);</script>";
 			}
@@ -225,7 +223,6 @@ class Tumblr_Import extends WP_Importer_Cron {
 	
 	function start_blog_import() {
 		check_admin_referer( 'tumblr-import' );
-	
 		$url = $_POST['blogurl'];
 		
 		if ( !isset( $this->blog[$url] ) ) {
@@ -588,7 +585,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 			case 200: // OK
 				break;
 			default:
-				$_error = sprintf( __( 'Tumblr replied with an error: %s', 'tumblr-importer' ).  wp_remote_retrieve_body( $out ) );
+				$_error = sprintf( __( 'Tumblr replied with an error: %s', 'tumblr-importer' ). wp_remote_retrieve_body( $out ) );
 				return new WP_Error('tumblr_error', $_error );
 			
 		}
