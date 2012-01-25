@@ -459,7 +459,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 			$path = parse_url($source,PHP_URL_PATH);
 			$filename = basename($path);
 		}
-
+		
 		// Download file to temp location
 		$tmp = download_url( $source );
 		if ( is_wp_error($tmp) )
@@ -681,7 +681,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 				case 'quote':
 					$post['format'] = 'quote';
 					$post['post_content'] = (string) $tpost->{'quote-text'};
-					$post['post_title'] = (string) $tpost->{'quote-source'};
+					$post['post_content'] .= "\n\n" . (string) $tpost->{'quote-source'};
 					break;
 				case 'link':
 					$post['format'] = 'link';
