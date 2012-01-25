@@ -324,6 +324,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 					}
 				}
 
+				do_action( 'tumblr_importing_post', $post );
 				$id = wp_insert_post( $post );
 				
 				if ( !is_wp_error( $id ) ) {
