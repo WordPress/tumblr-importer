@@ -323,17 +323,6 @@ class Tumblr_Import extends WP_Importer_Cron {
 
 				$post['post_author'] = $this->blog[$url]['post_author'];
 
-				if ( empty($post['post_title']) ) { 
-					// for empty titles, Attempt to use 100char of the content
-					$content_excerpt = wp_html_excerpt($post['post_content'], 100);
-					if ( ! empty($content_excerpt) ) {
-						$post['post_title'] = $content_excerpt;
-					// And failing the content, use the slug.
-					} elseif ( ! empty($post['post_name']) ) {
-						$post['post_title'] = $post['post_name'];
-					}
-				}
-
 				do_action( 'tumblr_importing_post', $post );
 				$id = wp_insert_post( $post );
 				
