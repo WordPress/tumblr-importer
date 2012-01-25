@@ -729,6 +729,11 @@ class Tumblr_Import extends WP_Importer_Cron {
 							
 							$post['post_content'] = $embed['src'];
 						}
+						// Sometimes, video-source contains iframe markup.
+						if ( preg_match( '/<iframe/', $tpost->{'video-source'} ) ) {
+							$embed['src'] = preg_replace( '|<iframe.*src="http://www.youtube.com/embed/([a-zA-Z0-9_\-]+)\??.*".*</iframe>|', 'http://www.youtube.com/watch/?v=$1', $tpost->{'video-source'} );
+							$post['post_content'] = $embed['src'];
+						}
 					
 					} else {
 						// @todo: See if the video-source is going to be oEmbed'able before adding the flash player
