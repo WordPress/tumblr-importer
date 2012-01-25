@@ -77,8 +77,6 @@ class Tumblr_Import extends WP_Importer_Cron {
 
 		if ( $saved && !isset($_GET['noheader']) ) {
 			?>
-			<div class='wrap'>
-			<h2><?php _e('Restart', 'tumblr-importer'); ?></h2>
 			<p><?php _e('We have saved some information about your Tumblr account in your WordPress database. Clearing this information will allow you to start over. Restarting will not affect any posts you have already imported. If you attempt to re-import a blog, duplicate posts will be skipped.', 'tumblr-importer'); ?></p>
 			<p><?php _e('Note: This will stop any import currently in progress.', 'tumblr-importer'); ?></p>
 			<form method='post' action='?import=tumblr&amp;noheader=true'>
@@ -86,7 +84,6 @@ class Tumblr_Import extends WP_Importer_Cron {
 			<input type='submit' class='button' value='<?php esc_attr_e('Clear account information', 'tumblr-importer'); ?>' name='restart' />
 			</p>
 			</form>
-			</div>
 			<?php
 		}
 	}
@@ -100,7 +97,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 		<div class='wrap'><?php echo screen_icon(); ?>
 		<h2><?php _e('Import Tumblr', 'tumblr-importer'); ?></h2>
 		<p><?php _e('Howdy! This importer allows you to import posts from your Tumblr account into your WordPress site.', 'tumblr-importer'); ?></p>
-		<p><?php _e('First, you need to do is provide your email and password for Tumblr, so that WordPress can access your account.', 'tumblr-importer'); ?></p>
+		<p><?php _e('Firstly, you need to provide your email and password for Tumblr, so that WordPress can access your account.', 'tumblr-importer'); ?></p>
 		<form action='?import=tumblr' method='post'>
 		<?php wp_nonce_field( 'tumblr-import' ) ?>
 			<table class="form-table">
@@ -144,11 +141,16 @@ class Tumblr_Import extends WP_Importer_Cron {
 	
 		if ( !empty( $error ) )
 			echo "<div class='error'><p>{$error}</p></div>";
+
+		$authors = get_users( array('who' => 'authors') );
 		?>
 		<div class='wrap'><?php echo screen_icon(); ?>
 		<h2><?php _e('Import Tumblr', 'tumblr-importer'); ?></h2>
-		<p><?php _e('Tumblr does not have such a concept as "author", even on multi-author blogs. Therefore you will need to select which WordPress user will be listed as the author of the imported posts.','tumblr-importer'); ?></p>
-		<p><a href="?import=tumblr"><?php _e('Refresh view','tumblr-importer'); ?></a></p>
+		<p><?php _e('Please select the Tumblr blog you would like to import into your WordPress site and then click on the "Import this Blog" button to continue.'); ?></p>
+		<p><?php _e('If your import gets stuck for a long time or you would like to import from a different Tumblr account instead then click on the "Clear account information" button below to reset the importer.','tumblr-importer'); ?></p>
+		<?php if ( 1 < count( $authors ) ) : ?>
+			<p><?php _e('As Tumblr does not expose the "author", even from multi-author blogs you will need to select which WordPress user will be listed as the author of the imported posts.','tumblr-importer'); ?></p>
+		<?php endif; ?>
 		<table class="widefat" cellspacing="0"><thead>
 		<tr>
 		<th><?php _e('Tumblr Blog','tumblr-importer'); ?></th>
@@ -157,8 +159,8 @@ class Tumblr_Import extends WP_Importer_Cron {
 		<th><?php _e('Drafts Imported','tumblr-importer'); ?></th>
 		<!--<th><?php _e('Queued Imported','tumblr-importer'); ?></th>-->
 		<th><?php _e('Pages Imported','tumblr-importer'); ?></th>
-		<th><?php _e('Author Selection','tumblr-importer'); ?></th>
-		<th><?php _e('Action','tumblr-importer'); ?></th>
+		<th><?php _e('Author','tumblr-importer'); ?></th>
+		<th><?php _e('Action/Status','tumblr-importer'); ?></th>
 		</tr></thead>
 		<tbody>
 		<?php
@@ -183,6 +185,17 @@ class Tumblr_Import extends WP_Importer_Cron {
 				$submit = "<input type='button' disabled='disabled' value='". __('Finished!','tumblr-importer') ."' />";
 			} else {
 				$submit = "<input type='button' disabled='disabled' value='". __('In Progress','tumblr-importer') ."' />";
+				// Just a little js page reload to show progress if we're in the in-progress phase of the import.
+				$submit .= "<script type='text/javascript'>setTimeout( 'window.location.href = window.location.href', 15000);</script>";
+			}
+			// Build an author selector / static name depending on number
+			if ( 1 == count( $authors ) ) {
+				$author_selection = "<input type='hidden' value='{$authors[0]->ID}' name='post_author' />{$authors[0]->display_name}";
+			} else {
+				$args = array('who' => 'authors', 'name' => 'post_author', 'echo' => false );
+				if ( isset( $this->blog[$url]['post_author'] ) )
+					$args['selected'] = $this->blog[$url]['post_author'];
+				$author_selection = wp_dropdown_users( $args );
 			}
 			?>
 			<tr class="<?php echo $style; ?>">
@@ -196,7 +209,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 				<td><?php echo $this->blog[$url]['drafts_complete']; ?></td>
 				<!--<td><?php echo $this->blog[$url]['queued_complete']; ?></td>-->
 				<td><?php echo $this->blog[$url]['pages_complete']; ?></td>
-				<td><?php wp_dropdown_users( array('who' => 'authors', 'name' => 'post_author' ) ); ?></td>
+				<td><?php echo $author_selection ?></td>
 				<td><?php echo $submit; ?></td>
 			</form>
 			</tr>
@@ -205,7 +218,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 		?>
 		</tbody>
 		</table>
-		<p><?php _e("Because Tumblr's servers are often overloaded, the importing process happens in the background. Thus, you will not see immediate results here. Come back to this page later to check on the importer's progress.",'tumblr-importer'); ?></p>
+		<p><?php _e("Importing your Tumblr blog can take a while so the importing process happens in the background and you may not see immediate results here. Come back to this page later to check on the importer's progress.",'tumblr-importer'); ?></p>
 		</div>
 		<?php
 	}
