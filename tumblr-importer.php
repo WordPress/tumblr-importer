@@ -566,8 +566,17 @@ class Tumblr_Import extends WP_Importer_Cron {
 
 		// fetch the list
 		$out = wp_remote_post($url,$options);
-		if (wp_remote_retrieve_response_code($out) != 200) {
-			return new WP_Error('tumblr_error', __('Tumblr replied with an error: ', 'tumblr-importer' ) . wp_remote_retrieve_body($out));
+		
+		switch ( wp_remote_retrieve_response_code( $out ) ) {
+			case 403: // Bad Username / Password
+				return new WP_Error('tumblr_error', __('Tumblr says that the username and password you provided were not valid. Please check you entered them correctly and try to connect again.', 'tumblr-importer' ) );
+				break;
+			case 200: // OK
+				break;
+			default:
+				$_error = sprintf( __( 'Tumblr replied with an error: %s', 'tumblr-importer' ).  wp_remote_retrieve_body( $out ) );
+				return new WP_Error('tumblr_error', $_error );
+			
 		}
 		$body = wp_remote_retrieve_body($out);
 
