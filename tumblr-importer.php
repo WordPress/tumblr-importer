@@ -734,7 +734,6 @@ class Tumblr_Import extends WP_Importer_Cron {
 						// @todo: See if the video-source is going to be oEmbed'able before adding the flash player
 						// 1 Seems to be "original" size, with 0 being set otherwise.
 						$post['post_content'] .= isset($tpost->{'video-player'}[1]) ? $tpost->{'video-player'}[1] : (string) $tpost->{'video-player'}[0];
-						$post['post_content'] .= (string) $tpost->{'video-source'};
 					}
 					$post['post_content'] .= "\n" . (string) $tpost->{'video-caption'};
 					break;
