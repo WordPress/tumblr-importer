@@ -165,6 +165,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 		<tbody>
 		<?php
 		$style = '';
+		$custom_domains = false;
 		foreach ($this->blogs as $blog) {
 			$url = $blog['url'];
 			$style = ( 'alternate' == $style ) ? '' : 'alternate';
@@ -188,6 +189,15 @@ class Tumblr_Import extends WP_Importer_Cron {
 				// Just a little js page reload to show progress if we're in the in-progress phase of the import.
 				$submit .= "<script type='text/javascript'>setTimeout( 'window.location.href = window.location.href', 15000);</script>";
 			}
+			
+			// Check to see if this url is a custom domain. The API doesn't play nicely with these
+			// (intermittently returns 408 status), so make the user disable the custom domain
+			// before importing.
+			if ( !preg_match( '|tumblr.com/$|', $url ) ) {
+				$submit = '<nobr><img src="' . admin_url( 'images/no.png' ) . '" style="vertical-align:top; padding: 0 4px;" alt="' . __( 'Tumblr Blogs with Custom Domains activated cannot be imported, please disable the custom domain first.', 'tumblr-importer' ) . '" title="' . __( 'Tumblr Blogs with Custom Domains activated cannot be imported, please disable the custom domain first.', 'tumblr-importer' ) . '" /><span style="cursor: pointer;" title="' . __( 'Tumblr Blogs with Custom Domains activated cannot be imported, please disable the custom domain first.' ) . '">' . __( 'Custom Domain', 'tumblr-importer' ) . '</nobr></span>';
+				$custom_domains = true;
+			}
+			
 			// Build an author selector / static name depending on number
 			if ( 1 == count( $authors ) ) {
 				$author_selection = "<input type='hidden' value='{$authors[0]->ID}' name='post_author' />{$authors[0]->display_name}";
@@ -218,6 +228,11 @@ class Tumblr_Import extends WP_Importer_Cron {
 		?>
 		</tbody>
 		</table>
+		<?php if ( $custom_domains ) : ?>
+		<p><strong>
+			<?php _e( 'As one or more of your Tumblr blogs has a Custom Domain mapped to it. If you would like to import one of these sites you will need to temporarily remove the custom domain mapping and clear the account information from the importer to import. Once the import is completed you can re-enable the custom domain for your site.' ); ?>
+		</strong></p>
+		<?php endif; ?>
 		<p><?php _e("Importing your Tumblr blog can take a while so the importing process happens in the background and you may not see immediate results here. Come back to this page later to check on the importer's progress.",'tumblr-importer'); ?></p>
 		</div>
 		<?php
