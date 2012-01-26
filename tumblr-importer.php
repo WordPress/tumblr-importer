@@ -47,6 +47,8 @@ class Tumblr_Import extends WP_Importer_Cron {
 	 * Constructor
 	 */
 	function __construct() {
+		add_action( 'tumblr_importer_metadata', array( $this, 'tumblr_importer_metadata' ) );
+		add_filter( 'tumblr_importer_format_post', array( $this, 'filter_format_post' ) );
 		parent::__construct();
 	}
 
@@ -276,7 +278,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 				default:
 					$done = true;
 					break;
-				}
+				}				
 				$this->save_vars();
 			} while ( empty($this->error) && !$done && $this->have_time() );
 		} 
@@ -333,8 +335,9 @@ class Tumblr_Import extends WP_Importer_Cron {
 					// @todo: Add basename of the permalink as a 404 redirect handler for when a custom domain has been brought accross
 					add_post_meta( $id, 'tumblr_'.$this->blog[$url]['name'].'_permalink', $post['tumblr_url'] );
 					add_post_meta( $id, 'tumblr_'.$this->blog[$url]['name'].'_id', $post['tumblr_id'] );
-					$import_result = $this->handle_sideload($post);
 
+					$import_result = $this->handle_sideload($post);
+					
 					// Handle failed imports.. If empty content and failed to import media..
 					if ( is_wp_error($import_result) ) {
 						if ( empty($post['post_content']) ) {
@@ -500,6 +503,8 @@ class Tumblr_Import extends WP_Importer_Cron {
 						return $id;
 				}
 				$post['post_content'] = "[gallery]\n" . $post['post_content'];
+				$post = apply_filters( 'tumblr_importer_format_post', $post );
+				do_action( 'tumblr_importer_metadata', $post );
 				wp_update_post($post);
 				break; // If we processed a gallery, break, otherwise let it fall through to the Image handler
 			}
@@ -513,6 +518,9 @@ class Tumblr_Import extends WP_Importer_Cron {
 				$link = !empty($post['media']['link']) ? $post['media']['link'] : null;
 				// image_send_to_editor has a filter to wrap in a shortcode.
 				$post['post_content'] = get_image_send_to_editor($id, (string)$post['post_title'], (string)$post['post_title'], 'none', $link, true, 'full' );
+				$post['meta']['attribution'] = $link;
+				$post = apply_filters( 'tumblr_importer_format_post', $post );
+				do_action( 'tumblr_importer_metadata', $post );
 				//$post['post_content'] .= "\n" . $post['post_content']; // the [caption] shortcode doesn't allow HTML, but this might have some extra markup
 				wp_update_post($post);
 			}
@@ -526,8 +534,17 @@ class Tumblr_Import extends WP_Importer_Cron {
 				if ( is_wp_error($id) )
 					return $id;
 				$post['post_content'] = wp_get_attachment_link($id) . "\n" . $post['post_content'];
-				wp_update_post($post);
+			} else {
+				// Try to work out a "source" link to display Tumblr-style.
+				preg_match( '/(http[^ "<>\']+)/', $post['post_content'], $matches );
+				if ( isset( $matches[1] ) ) {
+					$url_parts = parse_url( $matches[1] );
+					$post['meta']['attribution'] = $url_parts['scheme'] . "://" . $url_parts['host'] . "/";
+				}
 			}
+			$post = apply_filters( 'tumblr_importer_format_post', $post );
+			do_action( 'tumblr_importer_metadata', $post );
+			wp_update_post($post);
 			break;
 			
 		case 'video':
@@ -537,10 +554,22 @@ class Tumblr_Import extends WP_Importer_Cron {
 				if ( is_wp_error($id) )
 					return $id;
 
-				// @TODO: Check/change this to embed the imported video.
-				$post['post_content'] = wp_get_attachment_link($id) . "\n" . $post['post_content'];
-				wp_update_post($post);
+				// @TODO: Check/change this to embed the imported video.				
+				$link = wp_get_attachment_link($id) . "\n" . $post['post_content'];
+				$post['post_content'] = $link;
+				$post['meta']['attribution'] = $link;
+			} else {
+				// Try to work out a "source" link to mimic Tumblr's post formatting.
+				preg_match( '/(http[^ "<>\']+)/', $post['post_content'], $matches );
+				if ( isset( $matches[1] ) ) {
+					$url_parts = parse_url( $matches[1] );
+					$post['meta']['attribution'] = $url_parts['scheme'] . "://" . $url_parts['host'] . "/";
+				}
 			}
+			$post = apply_filters( 'tumblr_importer_format_post', $post );
+			do_action( 'tumblr_importer_metadata', $post );
+			wp_update_post($post);
+
 			// Else, Check to see if the url embedded is handled by oEmbed (or not)
 			break;
 		}
@@ -798,5 +827,25 @@ class Tumblr_Import extends WP_Importer_Cron {
 
 		return $pages;
 	}
+	
+	function filter_format_post( $_post ) {
+		if ( isset( $_post['meta']['attribution'] ) ) {
+			$attribution = $_post['meta']['attribution'];
+			if ( preg_match( '/^http[^ ]+$/', $_post['meta']['attribution'] ) )
+				$attribution = sprintf( '<a href="%s">%s</a>', $_post['meta']['attribution'], $_post['meta']['attribution'] );
+			$_post['post_content'] .= sprintf( '<div class="attribution">(<span>' . __( 'Source:', 'tumblr-importer' ) . '</span> %s)</div>', $attribution );
+		}
+		
+		return $_post;
+	}
+
+	function tumblr_importer_metadata( $_post ) {
+		if ( isset( $_post['meta'] ) ) {
+			foreach ( $_post['meta'] as $key => $val ) {
+				add_post_meta( $_post['ID'], 'tumblr_' . $key, $val );
+			}
+		}					
+	}
+	
 }
 }
