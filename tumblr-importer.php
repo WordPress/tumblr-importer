@@ -49,6 +49,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 	function __construct() {
 		add_action( 'tumblr_importer_metadata', array( $this, 'tumblr_importer_metadata' ) );
 		add_filter( 'tumblr_importer_format_post', array( $this, 'filter_format_post' ) );
+		add_filter( 'wp_insert_post_empty_content', array( $this, 'filter_allow_empty_content', 10, 2 ) );
 		parent::__construct();
 	}
 
@@ -862,6 +863,18 @@ class Tumblr_Import extends WP_Importer_Cron {
 				add_post_meta( $_post['ID'], 'tumblr_' . $key, $val );
 			}
 		}					
+	}
+	
+	/*
+	 * When galleries have no caption, the post_content field is empty, which
+	 * along with empty title and excerpt causes the post not to insert.
+	 * Here we override the default behavior.
+	 */
+	function filter_allow_empty_content( $maybe_empty, $_post ) {
+		if ( 'gallery' == $_post['format'] )
+			return false;
+		
+		return $maybe_empty;
 	}
 	
 }
