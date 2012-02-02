@@ -216,8 +216,8 @@ class Tumblr_Import extends WP_Importer_Cron {
 			
 				<td><?php echo esc_html($blog['title']); ?></td>
 				<td><?php echo esc_html($blog['url']); ?></td>
-				<td><?php echo $this->blog[$url]['posts_complete']; ?></td>
-				<td><?php echo $this->blog[$url]['drafts_complete']; ?></td>
+				<td><?php echo $this->blog[$url]['posts_complete'] . ' / ' . $this->blog[$url]['total_posts']; ?></td>
+				<td><?php echo $this->blog[$url]['drafts_complete'] . ' / ' . $this->blog[$url]['total_drafts']; ?></td>
 				<!--<td><?php echo $this->blog[$url]['queued_complete']; ?></td>-->
 				<td><?php echo $this->blog[$url]['pages_complete']; ?></td>
 				<td><?php echo $author_selection ?></td>
