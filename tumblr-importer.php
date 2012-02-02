@@ -307,7 +307,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 		$total = $this->blog[$url]['total_posts'];
 		
 		// check for posts completion
-		if ( $start == $total ) {
+		if ( $start >= $total ) {
 			$this->blog[$url]['progress'] = 'drafts';
 			return;
 		}
@@ -374,7 +374,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 		$total = $this->blog[$url]['total_drafts'];
 
 		// check for posts completion
-		if ( $start == $total ) {
+		if ( $start >= $total ) {
 			$this->blog[$url]['progress'] = 'queued';
 			return;
 		}
@@ -406,6 +406,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 				$post['post_status'] = 'draft';
 				$post['post_author'] = $this->blog[$url]['post_author'];
 
+				do_action( 'tumblr_importing_post', $post );
 				$id = wp_insert_post( $post );
 				if ( !is_wp_error( $id ) ) {
 					$post['ID'] = $id;
