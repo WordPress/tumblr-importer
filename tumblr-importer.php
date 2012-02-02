@@ -616,12 +616,14 @@ class Tumblr_Import extends WP_Importer_Cron {
 		
 		switch ( wp_remote_retrieve_response_code( $out ) ) {
 			case 403: // Bad Username / Password
+				do_action( 'tumblr_importer_handle_error', 'get_blogs_403' );
 				return new WP_Error('tumblr_error', __('Tumblr says that the username and password you provided were not valid. Please check you entered them correctly and try to connect again.', 'tumblr-importer' ) );
 				break;
 			case 200: // OK
 				break;
 			default:
 				$_error = sprintf( __( 'Tumblr replied with an error: %s', 'tumblr-importer' ), wp_remote_retrieve_body( $out ) );
+				do_action( 'tumblr_importer_handle_error', 'response_' . wp_remote_retrieve_response_code( $out ) );
 				return new WP_Error('tumblr_error', $_error );
 			
 		}
@@ -632,7 +634,10 @@ class Tumblr_Import extends WP_Importer_Cron {
 
 		$blogs = array();
 
-		if (!isset($xml->tumblelog)) new WP_Error('tumblr_error', __('No blog information found for this account. ', 'tumblr-importer' ));
+		if (!isset($xml->tumblelog)) {
+			new WP_Error('tumblr_error', __('No blog information found for this account. ', 'tumblr-importer' ));
+			do_action( 'tumblr_importer_handle_error', 'no_blog_found' );
+		}
 
 		$tblogs = $xml->tumblelog;
 		foreach ($tblogs as $tblog) {
