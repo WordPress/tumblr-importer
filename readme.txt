@@ -1,5 +1,5 @@
 === Tumblr Importer ===
-Contributors: Otto42, wordpressdotorg, dd32, westi, dllh
+Contributors: wordpressdotorg, Otto42, dd32, westi, dllh
 Tags: tumblr, import
 Requires at least: 3.2
 Tested up to: 3.3
