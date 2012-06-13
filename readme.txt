@@ -2,7 +2,7 @@
 Contributors: Otto42, wordpressdotorg, dd32, westi
 Tags: tumblr, import
 Requires at least: 3.2
-Tested up to: 3.3
+Tested up to: 3.4
 Stable tag: trunk
 
 == Description ==
