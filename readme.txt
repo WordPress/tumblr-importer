@@ -12,10 +12,10 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Imports a Tumblr blog into a WordPress blog.
 
 * Correctly handles post formats
-* WP-Cron based background importing: start it up, then come back later to see how far it's gotten
+* Background importing: start it up, then come back later to see how far it's gotten
 * Duplicate checking, will not create duplicate imported posts
 * Imports posts, drafts, and pages
-* Media Sideloading (for audio, video, and image posts)
+* Media Side loading (for audio, video, and image posts)
 
 == Installation ==
 
@@ -26,6 +26,14 @@ Imports a Tumblr blog into a WordPress blog.
 == Upgrade Notice ==
 
 == Changelog ==
+= 0.6 =
+* Significant improvements in the performance of the importer
+* Improves import of images from Tumblr - better choice of images sizes for theme display
+* Improved author selection logic on single author blogs
+* Auto refreshing to show import progress and give clearer feedback
+* Improves import videos from Tumble - enable auto-embedding for for content.
+* Block imports from Tumblr sites with mapped domains enabled because they don't work well - you have to temporarily disable the mapping.
+
 = 0.5 =
 * Fix edge cases for tumblr photos where tumblr isn't returning expected headers for filenames
 
