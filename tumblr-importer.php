@@ -740,27 +740,23 @@ class Tumblr_Import extends WP_Importer_Cron {
 	 * @param $state can be empty for normal posts, or "draft", "queue", or "submission" to get those posts
 	 * @returns false on error, array of posts on success
 	 */
-	function fetch_posts($url, $start=0, $count = 50, $email = null, $password = null, $state = null) {
+	function fetch_posts($url, $start=0, $count = 50, $email = null, $password = null, $state = null ) {
 		$url = parse_url( $url, PHP_URL_HOST );
-		$url = trailingslashit( "http://api.tumblr.com/v2/blog/$url/posts" );
+		$post_type = apply_filters( 'tumblr_post_type', '' );
+		$url = trailingslashit( "http://api.tumblr.com/v2/blog/$url/posts/$post_type" );
 
 		$params = array(
 			'offset'=>$start,
 			'limit'=>$count,
-			'api_key' => $this->tumblr_keyring->get_consumer_key()->key,
+			'api_key' => $this->consumerkey,
 		);
 
 		if ( !empty($state) ) $params['state'] = $state;
 		$url = add_query_arg( $params, $url );
-		print $url . "\n";
 
 		$response = $this->oauth_get_request($url);
-		//print_r( $response );
 
 		switch ( $response->meta->status ) {
-			case 403: // Bad Username / Password
-				do_action( 'tumblr_importer_handle_error', 'get_blogs_403' );
-				return new WP_Error('tumblr_error', __('Tumblr says that the the app is not authorized. Please check the settings and try to connect again.', 'tumblr-importer' ) );
 			case 200: // OK
 				break;
 			default:
@@ -771,114 +767,89 @@ class Tumblr_Import extends WP_Importer_Cron {
 
 		$posts = array();
 		$tposts = $response->response->posts;
-		foreach($tposts->post as $tpost) {
+		foreach( $tposts as $tpost ) {
 			$post = array();
-			$post['tumblr_id'] = (string) $tpost['id'];
-			$post['tumblr_url'] = (string) $tpost['url-with-slug'];
-			$post['post_date'] = date( 'Y-m-d H:i:s', strtotime ( (string) $tpost['date'] ) );
-			$post['post_date_gmt'] = date( 'Y-m-d H:i:s', strtotime ( (string) $tpost['date-gmt'] ) );
-			$post['post_name'] = (string) $tpost['slug'];
-			if ( isset($tpost['private']) ) $post['private'] = (string) $tpost['private'];
-			if ( isset($tpost->{'tag'}) ) {
+			$post['tumblr_id'] = (string) $tpost->id;
+			$post['tumblr_url'] = (string) $tpost->post_url;
+			$post['post_date'] = date( 'Y-m-d H:i:s', strtotime ( (string) $tpost->date ) );
+			$post['post_date_gmt'] = date( 'Y-m-d H:i:s', strtotime ( (string) $tpost->date ) );
+			$post['post_name'] = (string) $tpost->slug;
+			if ( 'private' == $tpost->state ) 
+				$post['private'] = (string) $tpost->state;
+			if ( isset( $tpost->tags ) ) {
 				$post['tags_input'] = array();
-				foreach ( $tpost->{'tag'} as $tag )
+				foreach ( $tpost->tags as $tag )
 					$post['tags_input'][] = rtrim( (string) $tag, ','); // Strip trailing Commas off it too.
 			}
 
-			// set the various post info for each special format tumblr offers
-			// TODO reorg this as needed
-			switch ((string) $tpost['type']) {
+			switch ( (string) $tpost->type ) {
 				case 'photo':
 					$post['format'] = 'image';
-					$post['media']['src'] = (string) $tpost->{'photo-url'}[0];
-					$post['media']['link'] =(string) $tpost->{'photo-link-url'};
-					$post['media']['width'] = (string) $tpost['width'];
-					$post['media']['height'] = (string) $tpost['height'];
-					$post['post_content'] = (string) $tpost->{'photo-caption'};
-					if ( !empty( $tpost->{'photoset'} ) ) {
+					$post['media']['src'] = (string) $tpost->photos[0]->original_size->url;
+					$post['media']['link'] = '';//TODO: Find out what to use here.(string) $tpost->{'photo-link-url'};
+					$post['media']['width'] = (string) $tpost->photos[0]->original_size->width;
+					$post['media']['height'] = (string) $tpost->photos[0]->original_size->height;
+					$post['post_content'] = (string) $tpost->photos[0]->caption;
+					if ( ! empty( $tpost->photos ) ) {
 						$post['format'] = 'gallery';
-						foreach ( $tpost->{'photoset'}->{'photo'} as $photo ) {
+						foreach ( $tpost->photos as $photo ) {
 							$post['gallery'][] = array (
-								'src'=>$photo->{'photo-url'}[0],
-								'width'=>$photo['width'],
-								'height'=>$photo['height'],
-								'caption'=>$photo['caption'],
+								'src'     => $photo->original_size->url,
+								'width'   => $photo->original_size->width,
+								'height'  => $photo->original_size->height,
+								'caption' => $photo->caption,
 							);
 						}
 					}
 					break;
 				case 'quote':
 					$post['format'] = 'quote';
-					$post['post_content'] = (string) $tpost->{'quote-text'};
-					$post['post_content'] .= "\n\n" . (string) $tpost->{'quote-source'};
+					$post['post_content'] = (string) $tpost->text;
+					$post['post_content'] .= "\n\n" . (string) $tpost->source;
 					break;
 				case 'link':
 					$post['format'] = 'link';
-					$linkurl = (string) $tpost->{'link-url'};
-					$linktext = (string) $tpost->{'link-text'};
-					$post['post_content'] = "<a href='{$linkurl}'>{$linktext}</a>";
-					$post['post_title'] = (string) $tpost->{'link-description'};
+					$linkurl = (string) $tpost->url;
+					$linktext = (string) $tpost->title;
+					$post['post_content'] = '';
+					if ( ! empty( $tpost->description ) )
+						$post['content'] .= $tpost->description . "<br />";
+					$post['post_content'] .= "<a href='$linkurl'>$linktext</a>";
+					$post['post_title'] = (string) $tpost->title;
 					break;
 				case 'conversation':
 					$post['format'] = 'chat';
-					$post['post_title'] = (string) $tpost->{'conversation-title'};
-					$post['post_content'] = (string) $tpost->{'conversation-text'};
+					$post['post_title'] = (string) $tpost->title;
+					$post['post_content'] = (string) $tpost->body;
 					break;
 				case 'audio':
 					$post['format'] = 'audio';
-					$post['media']['filename'] = basename( (string) $tpost->{'authorized-download-url'} ) . '.mp3';
-					$post['media']['audio'] = (string) $tpost->{'authorized-download-url'} .'?plead=please-dont-download-this-or-our-lawyers-wont-let-us-host-audio';
-					$post['post_content'] = (string) $tpost->{'audio-player'} . "\n" . (string) $tpost->{'audio-caption'};
-					if ( !empty($tpost->{'id3-artist'}) )
-						$post['post_title'] = $tpost->{'id3-artist'} . ' - ' . $tpost->{'id3-title'};
+					$post['media']['filename'] = basename( (string) $tpost->audio_url );
+					$post['media']['audio'] = (string) $tpost->audio_url .'?plead=please-dont-download-this-or-our-lawyers-wont-let-us-host-audio';
+					$post['post_content'] = (string) $tpost->player . "\n" . (string) $tpost->caption;
 					break;
 				case 'video':
 					$post['format'] = 'video';
 					$post['post_content'] = '';
-					if ( is_serialized( (string) $tpost->{'video-source'} ) ) {
-						if ( preg_match('|\'(http://.*video_file.*)\'|U', $tpost->{'video-player'}[0], $matches) ) {
-							$post['media']['video'] = $matches[1];
-							$val = unserialize( (string) $tpost->{'video-source'} );
-							$vidmeta = $val['o1'];
-							$post['media']['filename'] = basename($post['media']['video']) . '.' . $vidmeta['extension'];
-							$post['media']['width'] = $vidmeta['width'];
-							$post['media']['height'] = $vidmeta['height'];
-						}
-					} else if ( false !== strpos( (string) $tpost->{'video-source'}, 'embed' ) ) {
-						if ( preg_match_all('/<embed (.+?)>/', (string) $tpost->{'video-source'}, $matches) ) {
-							foreach ($matches[1] as $match) {
-								foreach ( wp_kses_hair($match, array('http')) as $attr)
-									$embed[$attr['name']] = $attr['value'];
-							}
-							
-							// special case for weird youtube vids
-							$embed['src'] = preg_replace('|http://www.youtube.com/v/([a-zA-Z0-9_]+).*|i', 'http://www.youtube.com/watch?v=$1', $embed['src']);
-							
-							// TODO find other special cases, since tumblr is full of them
-							
-							$post['post_content'] = $embed['src'];
-						}
-						// Sometimes, video-source contains iframe markup.
-						if ( preg_match( '/<iframe/', $tpost->{'video-source'} ) ) {
-							$embed['src'] = preg_replace( '|<iframe.*src="http://www.youtube.com/embed/([a-zA-Z0-9_\-]+)\??.*".*</iframe>|', 'http://www.youtube.com/watch/?v=$1', $tpost->{'video-source'} );
-							$post['post_content'] = $embed['src'];
-						}
-					
-					} else {
-						// @todo: See if the video-source is going to be oEmbed'able before adding the flash player
-						// 1 Seems to be "original" size, with 0 being set otherwise.
-						$post['post_content'] .= isset($tpost->{'video-player'}[1]) ? $tpost->{'video-player'}[1] : (string) $tpost->{'video-player'}[0];
+					if ( isset( $tpost->video_url ) ) {
+						$post['media']['video'] = $tpost->video_url;
+					} else if ( isset( $tpost->player ) ) {
+						$player = $tpost->player[ count( $tpost->player ) - 1 ]->embed_code;
+						$player = preg_replace( '|http://www.youtube.com/v/([a-zA-Z0-9_]+).*|i', 'http://www.youtube.com/watch?v=$1', $player );
+						$post['post_content']  .= $player;
 					}
-					$post['post_content'] .= "\n" . (string) $tpost->{'video-caption'};
+					$post['post_content'] .= "\n" . (string) $tpost->caption;
 					break;
 				case 'answer':
-					$post['post_title'] = (string) $tpost->{'question'};
-					$post['post_content'] = (string) $tpost->{'answer'};
+					// TODO: Include asking_name and asking_url values?
+					$post['post_title'] = (string) $tpost->question;
+					$post['post_content'] = (string) $tpost->answer;
 					break;
 				case 'regular':
+				case 'text':
 				default:
-					$post['post_title'] = (string) $tpost->{'regular-title'};
-					$post['post_content'] = (string) $tpost->{'regular-body'};
+					$post['post_title'] = (string) $tpost->title;
+					$post['post_content'] = (string) $tpost->body;
 					break;
 			}
 			$posts[] = $post;
