@@ -160,7 +160,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 		wp_parse_str( wp_remote_retrieve_body( $response ), $this->request_tokens);
 		$this->authorize_url = add_query_arg(array(
 			'oauth_token' => $this->request_tokens ['oauth_token'], 
-			'oauth_callback' => self_admin_url('admin.php?import=tumblr'),
+			'oauth_callback' => urlencode( self_admin_url('admin.php?import=tumblr') ),
 			), 'http://www.tumblr.com/oauth/authorize');
 
 		return;
@@ -677,7 +677,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 	 	
 	 	$url = 'http://www.tumblr.com/oauth/request_token';
 	 
-	 	$params = array('oauth_callback' => self_admin_url('admin.php?import=tumblr'),
+	 	$params = array('oauth_callback' => urlencode( self_admin_url('admin.php?import=tumblr') ),
 	 			'oauth_consumer_key' => $this->consumerkey,
 	 			"oauth_version" => "1.0",
 	 			"oauth_nonce" => time(),
