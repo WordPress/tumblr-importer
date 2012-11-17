@@ -64,8 +64,6 @@ class Tumblr_Import extends WP_Importer_Cron {
 		$this->consumerkey = defined ('TUMBLR_CONSUMER_KEY') ? TUMBLR_CONSUMER_KEY : ( !empty($_POST['consumerkey']) ? $_POST['consumerkey'] : $this->consumerkey );
 		$this->secretkey = defined ('TUMBLR_SECRET_KEY') ? TUMBLR_SECRET_KEY : ( !empty($_POST['secretkey']) ? $_POST['secretkey'] : $this->secretkey );
 		
-		var_dump($this);
-		
 		// if we have access tokens, verify that they work
 		if ( !empty( $this->access_tokens ) ) {
 			// TODO
@@ -339,7 +337,6 @@ class Tumblr_Import extends WP_Importer_Cron {
 		$done = true;
 		
 		$this->error=null;
-		
 		if ( !empty( $this->blog[$url]['progress'] ) ) {
 			$done = false;
 			do {
@@ -456,6 +453,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 		if ($this->blog[$url]['posts_complete'] + TUMBLR_MAX_IMPORT > $total) $count = $total - $start;
 		else $count = TUMBLR_MAX_IMPORT;
 
+		add_filter( 'tumblr_post_type', function() { return 'draft'; } );
 		$imported_posts = $this->fetch_posts($url, $start, $count, $this->email, $this->password, 'draft' );
 
 		if ( empty($imported_posts) ) {
@@ -748,17 +746,18 @@ class Tumblr_Import extends WP_Importer_Cron {
 		$url = parse_url( $url, PHP_URL_HOST );
 		$post_type = apply_filters( 'tumblr_post_type', '' );
 		$url = trailingslashit( "http://api.tumblr.com/v2/blog/$url/posts/$post_type" );
-
+		
 		do_action( 'tumblr_importer_pre_fetch_posts' );
 
-		$params = array(
-			'offset'=>$start,
-			'limit'=>$count,
-			'api_key' => apply_filters( 'tumblr_importer_get_consumer_key', '' ),
-		);
-
-		if ( !empty($state) ) $params['state'] = $state;
-		$url = add_query_arg( $params, $url );
+		// These extra params hose up the auth if passed for oauth requests e.g. for drafts, so use them only for normal posts.
+		if ( '' == $post_type ) {
+			$params = array(
+				'offset'  => $start,
+				'limit'   => $count,
+				'api_key' => apply_filters( 'tumblr_importer_get_consumer_key', '' ),
+			);
+			$url = add_query_arg( $params, $url );
+		}
 
 		$response = $this->oauth_get_request($url);
 
@@ -979,7 +978,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 		if ( empty( $this->access_tokens ) ) 
 			return false;
 	
-		$params = array('oauth_consumer_key' => $this->consumerkey,
+		$params = array('oauth_consumer_key' => $this->get_consumer_key(),
 				"oauth_nonce" => time(),
 				"oauth_timestamp" => time(),
 				"oauth_token" => $this->access_tokens['oauth_token'],
