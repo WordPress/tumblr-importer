@@ -831,6 +831,9 @@ class Tumblr_Import extends WP_Importer_Cron {
 				case 'audio':
 					$post['format'] = 'audio';
 					$post['media']['filename'] = basename( (string) $tpost->audio_url );
+					// If no .mp3 extension, add one so that sideloading works.
+					if ( ! preg_match( '/\.mp3$/', $post['media']['filename'] ) )
+						$post['media']['filename'] .= '.mp3';
 					$post['media']['audio'] = (string) $tpost->audio_url .'?plead=please-dont-download-this-or-our-lawyers-wont-let-us-host-audio';
 					$post['post_content'] = (string) $tpost->player . "\n" . (string) $tpost->caption;
 					break;
