@@ -817,10 +817,9 @@ class Tumblr_Import extends WP_Importer_Cron {
 					$post['format'] = 'link';
 					$linkurl = (string) $tpost->url;
 					$linktext = (string) $tpost->title;
-					$post['post_content'] = '';
+					$post['post_content'] = "<a href='$linkurl'>$linktext</a>";
 					if ( ! empty( $tpost->description ) )
-						$post['content'] .= $tpost->description . "<br />";
-					$post['post_content'] .= "<a href='$linkurl'>$linktext</a>";
+						$post['post_content'] .= '<div class="link_description">' . (string) $tpost->description . '</div>';
 					$post['post_title'] = (string) $tpost->title;
 					break;
 				case 'conversation':
