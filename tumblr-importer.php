@@ -49,6 +49,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 	function __construct() {
 		add_action( 'tumblr_importer_metadata', array( $this, 'tumblr_importer_metadata' ) );
 		add_filter( 'tumblr_importer_format_post', array( $this, 'filter_format_post' ) );
+		add_filter( 'tumblr_importer_get_consumer_key', array( $this, 'get_consumer_key' ) );
 		add_filter( 'wp_insert_post_empty_content', array( $this, 'filter_allow_empty_content' ), 10, 2 );
 		parent::__construct();
 	}
@@ -493,7 +494,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 			} while ( false != ($post = next($imported_posts) ) && $this->have_time() );
 		}
 	}
-	
+
 	function do_pages_import($url) {
 		$start = $this->blog[$url]['pages_complete'];
 
@@ -549,7 +550,6 @@ class Tumblr_Import extends WP_Importer_Cron {
 			$path = parse_url($source,PHP_URL_PATH);
 			$filename = basename($path);
 		}
-		
 		// Download file to temp location
 		$tmp = download_url( $source );
 		if ( is_wp_error($tmp) )
@@ -616,7 +616,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 			
 			break;
 		
-			case 'audio':
+		case 'audio':
 			// Handle Tumblr Hosted Audio
 			if ( isset( $post['media']['audio'] ) ) {
 				$id = $this->handle_sideload_import( $post, (string)$post['media']['audio'], $post['post_title'], (string)$post['media']['filename'] );
@@ -732,6 +732,10 @@ class Tumblr_Import extends WP_Importer_Cron {
 		return $this->blogs;
 	}
 
+	function get_consumer_key() {
+		return $this->consumerkey;
+	}
+
 	/**
 	 * Fetch a subset of posts from a tumblr blog
 	 *
@@ -745,10 +749,12 @@ class Tumblr_Import extends WP_Importer_Cron {
 		$post_type = apply_filters( 'tumblr_post_type', '' );
 		$url = trailingslashit( "http://api.tumblr.com/v2/blog/$url/posts/$post_type" );
 
+		do_action( 'tumblr_importer_pre_fetch_posts' );
+
 		$params = array(
 			'offset'=>$start,
 			'limit'=>$count,
-			'api_key' => $this->consumerkey,
+			'api_key' => apply_filters( 'tumblr_importer_get_consumer_key', '' ),
 		);
 
 		if ( !empty($state) ) $params['state'] = $state;
