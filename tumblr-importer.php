@@ -5,7 +5,7 @@ Plugin URI: http://wordpress.org/extend/plugins/tumblr-importer/
 Description: Import posts from a Tumblr blog.
 Author: wordpressdotorg
 Author URI: http://wordpress.org/
-Version: 0.7-beta
+Version: 0.7
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 */
 
@@ -794,7 +794,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 					$post['media']['link'] = '';//TODO: Find out what to use here.(string) $tpost->{'photo-link-url'};
 					$post['media']['width'] = (string) $tpost->photos[0]->original_size->width;
 					$post['media']['height'] = (string) $tpost->photos[0]->original_size->height;
-					$post['post_content'] = (string) $tpost->photos[0]->caption;
+					$post['post_content'] = (string) $tpost->caption;
 					if ( ! empty( $tpost->photos ) ) {
 						$post['format'] = 'gallery';
 						foreach ( $tpost->photos as $photo ) {
@@ -809,8 +809,8 @@ class Tumblr_Import extends WP_Importer_Cron {
 					break;
 				case 'quote':
 					$post['format'] = 'quote';
-					$post['post_content'] = (string) $tpost->text;
-					$post['post_content'] .= "\n\n" . (string) $tpost->source;
+					$post['post_content'] = '<blockquote>' . (string) $tpost->text . '</blockquote>';
+					$post['post_content'] .= "\n\n<div class='attribution'>" . (string) $tpost->source . '</div>';
 					break;
 				case 'link':
 					$post['format'] = 'link';
@@ -821,7 +821,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 						$post['post_content'] .= '<div class="link_description">' . (string) $tpost->description . '</div>';
 					$post['post_title'] = (string) $tpost->title;
 					break;
-				case 'conversation':
+				case 'chat':
 					$post['format'] = 'chat';
 					$post['post_title'] = (string) $tpost->title;
 					$post['post_content'] = (string) $tpost->body;
