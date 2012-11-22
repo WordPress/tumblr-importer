@@ -794,7 +794,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 					$post['media']['link'] = '';//TODO: Find out what to use here.(string) $tpost->{'photo-link-url'};
 					$post['media']['width'] = (string) $tpost->photos[0]->original_size->width;
 					$post['media']['height'] = (string) $tpost->photos[0]->original_size->height;
-					$post['post_content'] = (string) $tpost->photos[0]->caption;
+					$post['post_content'] = (string) $tpost->caption;
 					if ( ! empty( $tpost->photos ) ) {
 						$post['format'] = 'gallery';
 						foreach ( $tpost->photos as $photo ) {
