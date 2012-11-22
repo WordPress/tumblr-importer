@@ -809,8 +809,8 @@ class Tumblr_Import extends WP_Importer_Cron {
 					break;
 				case 'quote':
 					$post['format'] = 'quote';
-					$post['post_content'] = (string) $tpost->text;
-					$post['post_content'] .= "\n\n" . (string) $tpost->source;
+					$post['post_content'] = '<blockquote>' . (string) $tpost->text . '</blockquote>';
+					$post['post_content'] .= "\n\n<div class='attribution'>" . (string) $tpost->source . '</div>';
 					break;
 				case 'link':
 					$post['format'] = 'link';
