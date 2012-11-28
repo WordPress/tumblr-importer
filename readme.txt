@@ -25,9 +25,12 @@ Imports a Tumblr blog into a WordPress blog.
 
 == Upgrade Notice ==
 
+Version 0.7 fixes problems caused by Tumblr's removal of the old API, and now uses their new API.
+
 == Changelog ==
+
 = 0.7 =
-* Update to new Tumblr API, many fixes and improvements.
+* Update to use new Tumblr API, many fixes and improvements.
 
 = 0.6 =
 * Significant improvements in the performance of the importer
