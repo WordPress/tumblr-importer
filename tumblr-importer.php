@@ -5,7 +5,7 @@ Plugin URI: http://wordpress.org/extend/plugins/tumblr-importer/
 Description: Import posts from a Tumblr blog.
 Author: wordpressdotorg
 Author URI: http://wordpress.org/
-Version: 0.7
+Version: 0.8
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 */
 
@@ -61,8 +61,8 @@ class Tumblr_Import extends WP_Importer_Cron {
 			
 		if ( !isset($this->error) ) $this->error = null;
 		
-		$this->consumerkey = defined ('TUMBLR_CONSUMER_KEY') ? TUMBLR_CONSUMER_KEY : ( !empty($_POST['consumerkey']) ? $_POST['consumerkey'] : $this->consumerkey );
-		$this->secretkey = defined ('TUMBLR_SECRET_KEY') ? TUMBLR_SECRET_KEY : ( !empty($_POST['secretkey']) ? $_POST['secretkey'] : $this->secretkey );
+		@ $this->consumerkey = defined ('TUMBLR_CONSUMER_KEY') ? TUMBLR_CONSUMER_KEY : ( !empty($_POST['consumerkey']) ? $_POST['consumerkey'] : $this->consumerkey );
+		@ $this->secretkey = defined ('TUMBLR_SECRET_KEY') ? TUMBLR_SECRET_KEY : ( !empty($_POST['secretkey']) ? $_POST['secretkey'] : $this->secretkey );
 		
 		// if we have access tokens, verify that they work
 		if ( !empty( $this->access_tokens ) ) {
@@ -159,7 +159,6 @@ class Tumblr_Import extends WP_Importer_Cron {
 		wp_parse_str( wp_remote_retrieve_body( $response ), $this->request_tokens);
 		$this->authorize_url = add_query_arg(array(
 			'oauth_token' => $this->request_tokens ['oauth_token'], 
-			'oauth_callback' => urlencode( self_admin_url('admin.php?import=tumblr') ),
 			), 'http://www.tumblr.com/oauth/authorize');
 
 		return;
@@ -679,7 +678,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 	 	
 	 	$url = 'http://www.tumblr.com/oauth/request_token';
 	 
-	 	$params = array('oauth_callback' => urlencode( self_admin_url('admin.php?import=tumblr') ),
+	 	$params = array('oauth_callback' => self_admin_url('admin.php?import=tumblr'),
 	 			'oauth_consumer_key' => $this->consumerkey,
 	 			"oauth_version" => "1.0",
 	 			"oauth_nonce" => time(),
