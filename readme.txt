@@ -2,7 +2,7 @@
 Contributors: wordpressdotorg, Otto42, dd32, westi, dllh
 Tags: tumblr, import
 Requires at least: 3.2
-Tested up to: 3.4
+Tested up to: 3.6
 Stable tag: 0.8
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
