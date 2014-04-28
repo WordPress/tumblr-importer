@@ -29,6 +29,9 @@ Version 0.8 fixes a problem with authorization caused by Tumblr's undocumented c
 
 == Changelog ==
 
+= 0.9 = 
+* Force WP_IMPORTING to true during the do_blog_import process.
+
 = 0.8 =
 * Fix callback handling for Tumblr OAuth. They no longer recognize the callback in the authorize URL, and instead expect a non-urlencoded callback parameter in the request-token call. This is not documented anywhere that I can find.
 
