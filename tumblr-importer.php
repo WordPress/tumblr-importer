@@ -60,12 +60,12 @@ class Tumblr_Import extends WP_Importer_Cron {
 	function start() {
 		if ( isset($_POST['restart']) )
 			$this->restart();
-			
+
 		if ( !isset($this->error) ) $this->error = null;
-		
+
 		@ $this->consumerkey = defined ('TUMBLR_CONSUMER_KEY') ? TUMBLR_CONSUMER_KEY : ( !empty($_POST['consumerkey']) ? $_POST['consumerkey'] : $this->consumerkey );
 		@ $this->secretkey = defined ('TUMBLR_SECRET_KEY') ? TUMBLR_SECRET_KEY : ( !empty($_POST['secretkey']) ? $_POST['secretkey'] : $this->secretkey );
-		
+
 		// if we have access tokens, verify that they work
 		if ( !empty( $this->access_tokens ) ) {
 			// TODO
@@ -82,7 +82,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 		} else {
 			$this->greet($this->error);
 		}
-		
+
 		unset ($this->error);
 
 		if ( !isset($_POST['restart']) ) $saved = $this->save_vars();
@@ -99,29 +99,29 @@ class Tumblr_Import extends WP_Importer_Cron {
 			<?php
 		}
 	}
-	
+
 	function greet($error=null) {
-		
+
 		if ( !empty( $error ) )
 			echo "<div class='error'><p>{$error}</p></div>";
 		?>
-		
+
 		<div class='wrap'><?php echo screen_icon(); ?>
 		<h2><?php _e('Import Tumblr', 'tumblr-importer'); ?></h2>
 		<?php if ( empty($this->request_tokens) ) { ?>
 		<p><?php _e('Howdy! This importer allows you to import posts from your Tumblr account into your WordPress site.', 'tumblr-importer'); ?></p>
 		<p><?php _e("First, you will need to create an 'app' on Tumblr. The app provides a connection point between your blog and Tumblr's servers.", 'tumblr-importer'); ?></p>
-		
-		<p><?php _e('To create an app, visit this page:', 'tumblr-importer'); ?><a href="http://www.tumblr.com/oauth/apps">http://www.tumblr.com/oauth/apps</a></p>
+
+		<p><?php _e('To create an app, visit this page:', 'tumblr-importer'); ?><a href="https://www.tumblr.com/oauth/apps">https://www.tumblr.com/oauth/apps</a></p>
 		<ol>
 		<li><?php _e('Click the large green "Register Application" button.','tumblr-importer'); ?></li>
 		<li><?php _e('You need to fill in the "Application Name", "Application Website", and "Default Callback URL" fields. All the rest can be left blank.','tumblr-importer'); ?></li>
 		<li><?php _e('For the "Application Website" and "Default Callback URL" fields, please put in this URL: ','tumblr-importer'); echo '<strong>'.home_url().'</strong>'; ?></li>
 		<li><?php _e('Note: It is important that you put in that URL <em>exactly as given</em>.','tumblr-importer'); ?></li>
 		</ol>
-		
+
 		<p><?php _e('After creating the application, copy and paste the "OAuth Consumer Key" and "Secret Key" into the given fields below.', 'tumblr-importer'); ?></p>
-				
+
 		<form action='?import=tumblr' method='post'>
 			<table class="form-table">
 				<tr>
@@ -147,11 +147,11 @@ class Tumblr_Import extends WP_Importer_Cron {
 		<?php
 		}
 	}
-	
-	function check_credentials() {				
+
+	function check_credentials() {
 		if ( !( $response = $this->oauth_get_request_token() ) )
 			return;
-		
+
 		if (  is_wp_error( $response ) || 200 != wp_remote_retrieve_response_code( $response ) ) {
 			$this->error = __('Tumblr returned an error: ', 'tumblr-importer') . wp_remote_retrieve_response_code( $response ) .' '. wp_remote_retrieve_body( $response );
 			return;
@@ -160,19 +160,19 @@ class Tumblr_Import extends WP_Importer_Cron {
 		$this->request_tokens = array();
 		wp_parse_str( wp_remote_retrieve_body( $response ), $this->request_tokens);
 		$this->authorize_url = add_query_arg(array(
-			'oauth_token' => $this->request_tokens ['oauth_token'], 
-			), 'http://www.tumblr.com/oauth/authorize');
+			'oauth_token' => $this->request_tokens ['oauth_token'],
+			), 'https://www.tumblr.com/oauth/authorize');
 
 		return;
 	}
-	
+
 	function check_permissions() {
 		$verifier = $_GET['oauth_verifier'];
 		$token = $_GET['oauth_token'];
-		
+
 		// get the access_tokens
-		$url = 'http://www.tumblr.com/oauth/access_token';
-		
+		$url = 'https://www.tumblr.com/oauth/access_token';
+
 		$params = array('oauth_consumer_key' => $this->consumerkey,
 				"oauth_nonce" => time().rand(),
 				"oauth_timestamp" => time(),
@@ -185,8 +185,8 @@ class Tumblr_Import extends WP_Importer_Cron {
 		$params['oauth_signature'] = $this->oauth_signature(array($this->secretkey,$this->request_tokens['oauth_token_secret']), 'GET', $url, $params);
 
 		$url = add_query_arg( array_map('urlencode', $params), $url);
-		$response = wp_remote_get( $url );		
-		unset($this->request_tokens);		
+		$response = wp_remote_get( $url );
+		unset($this->request_tokens);
 		if ( is_wp_error( $response ) || 200 != wp_remote_retrieve_response_code( $response ) ) {
 			$this->error = __('Tumblr returned an error: ', 'tumblr-importer') . wp_remote_retrieve_response_code( $response ) .' '. wp_remote_retrieve_body( $response );
 			return;
@@ -194,20 +194,20 @@ class Tumblr_Import extends WP_Importer_Cron {
 			$this->access_tokens = array();
 			wp_parse_str( wp_remote_retrieve_body( $response ), $this->access_tokens);
 		}
-		
+
 		// try to get the list of blogs on the account
-		
+
 		$blogs = $this->get_blogs();
 		if ( is_wp_error ($blogs) ) {
 			$this->error = $blogs->get_error_message();
 		} else {
 			$this->blogs = $blogs;
 		}
-		return;	
+		return;
 	}
-	
+
 	function show_blogs($error=null) {
-	
+
 		if ( !empty( $error ) )
 			echo "<div class='error'><p>{$error}</p></div>";
 
@@ -243,12 +243,12 @@ class Tumblr_Import extends WP_Importer_Cron {
 				$this->blog[$url]['drafts_complete'] = 0;
 				$this->blog[$url]['queued_complete'] = 0;
 				$this->blog[$url]['pages_complete'] = 0;
-				$this->blog[$url]['total_posts'] = $blog['posts']; 
+				$this->blog[$url]['total_posts'] = $blog['posts'];
 				$this->blog[$url]['total_drafts'] = $blog['drafts'];
 				$this->blog[$url]['total_queued'] = $blog['queued'];
 				$this->blog[$url]['name'] = $blog['name'];
 			}
-			
+
 			if ( empty( $this->blog[$url]['progress'] ) ) {
 				$submit = "<input type='submit' value='". __('Import this blog','tumblr-importer') ."' />";
 			} else if ( $this->blog[$url]['progress'] == 'finish' ) {
@@ -258,7 +258,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 				// Just a little js page reload to show progress if we're in the in-progress phase of the import.
 				$submit .= "<script type='text/javascript'>setTimeout( 'window.location.href = window.location.href', 15000);</script>";
 			}
-			
+
 			// Check to see if this url is a custom domain. The API doesn't play nicely with these
 			// (intermittently returns 408 status), so make the user disable the custom domain
 			// before importing.
@@ -266,7 +266,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 				$submit = '<nobr><img src="' . admin_url( 'images/no.png' ) . '" style="vertical-align:top; padding: 0 4px;" alt="' . __( 'Tumblr Blogs with Custom Domains activated cannot be imported, please disable the custom domain first.', 'tumblr-importer' ) . '" title="' . __( 'Tumblr Blogs with Custom Domains activated cannot be imported, please disable the custom domain first.', 'tumblr-importer' ) . '" /><span style="cursor: pointer;" title="' . __( 'Tumblr Blogs with Custom Domains activated cannot be imported, please disable the custom domain first.' ) . '">' . __( 'Custom Domain', 'tumblr-importer' ) . '</nobr></span>';
 				$custom_domains = true;
 			}
-			
+
 			// Build an author selector / static name depending on number
 			if ( 1 == count( $authors ) ) {
 				$author_selection = "<input type='hidden' value='{$authors[0]->ID}' name='post_author' />{$authors[0]->display_name}";
@@ -281,7 +281,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 			<form action='?import=tumblr' method='post'>
 			<?php wp_nonce_field( 'tumblr-import' ); ?>
 			<input type='hidden' name='blogurl' value='<?php echo esc_attr($blog['url']); ?>' />
-			
+
 				<td><?php echo esc_html($blog['title']); ?></td>
 				<td><?php echo esc_html($blog['url']); ?></td>
 				<td><?php echo $this->blog[$url]['posts_complete'] . ' / ' . $this->blog[$url]['total_posts']; ?></td>
@@ -306,15 +306,15 @@ class Tumblr_Import extends WP_Importer_Cron {
 		</div>
 		<?php
 	}
-	
+
 	function start_blog_import() {
 		check_admin_referer( 'tumblr-import' );
 		$url = $_POST['blogurl'];
-		
+
 		if ( !isset( $this->blog[$url] ) ) {
 			$this->error = __('The specified blog cannot be found.', 'tumblr-importer');
 			return;
-		}	
+		}
 
 		if ( !empty($this->blog[$url]['progress']) ) {
 			$this->error = __('This blog is currently being imported.', 'tumblr-importer');
@@ -323,20 +323,20 @@ class Tumblr_Import extends WP_Importer_Cron {
 
 		$this->blog[$url]['progress'] = 'start';
 		$this->blog[$url]['post_author'] = (int) $_POST['post_author'];
-		
+
 		$this->schedule_import_job( 'do_blog_import', array($url) );
 	}
-	
+
 	function restart() {
 		delete_option(get_class($this));
 		wp_redirect('?import=tumblr');
 	}
-	
+
 	function do_blog_import($url) {
-		
+
 		// default to the done state
 		$done = true;
-		
+
 		$this->error=null;
 		if ( !empty( $this->blog[$url]['progress'] ) ) {
 			$done = false;
@@ -363,37 +363,37 @@ class Tumblr_Import extends WP_Importer_Cron {
 				default:
 					$done = true;
 					break;
-				}				
+				}
 				$this->save_vars();
 			} while ( empty($this->error) && !$done && $this->have_time() );
-		} 
-	
+		}
+
 		return $done;
 	}
-	
+
 	function do_posts_import($url) {
 		$start = $this->blog[$url]['posts_complete'];
 		$total = $this->blog[$url]['total_posts'];
-		
+
 		// check for posts completion
 		if ( $start >= $total ) {
 			$this->blog[$url]['progress'] = 'drafts';
 			return;
 		}
-		
+
 		// get the already imported posts to prevent dupes
 		$dupes = $this->get_imported_posts( 'tumblr', $this->blog[$url]['name'] );
-		
+
 		if ($this->blog[$url]['posts_complete'] + TUMBLR_MAX_IMPORT > $total) $count = $total - $start;
 		else $count = TUMBLR_MAX_IMPORT;
-		
+
 		$imported_posts = $this->fetch_posts($url, $start, $count, $this->email, $this->password );
-		
+
 		if ( false === $imported_posts ) {
 			$this->error = __('Problem communicating with Tumblr, retrying later','tumblr-importer');
 			return;
 		}
-		
+
 		if ( is_array($imported_posts) && !empty($imported_posts) ) {
 			reset($imported_posts);
 			$post = current($imported_posts);
@@ -422,7 +422,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 					add_post_meta( $id, 'tumblr_'.$this->blog[$url]['name'].'_id', $post['tumblr_id'] );
 
 					$import_result = $this->handle_sideload($post);
-					
+
 					// Handle failed imports.. If empty content and failed to import media..
 					if ( is_wp_error($import_result) ) {
 						if ( empty($post['post_content']) ) {
@@ -430,7 +430,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 						}
 					}
 				}
-				
+
 				$this->blog[$url]['posts_complete']++;
 				$this->save_vars();
 
@@ -465,7 +465,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 			$this->error = __('Problem communicating with Tumblr, retrying later','tumblr-importer');
 			return;
 		}
-		
+
 		if ( is_array($imported_posts) && !empty($imported_posts) ) {
 			reset($imported_posts);
 			$post = current($imported_posts);
@@ -488,7 +488,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 
 					add_post_meta( $id, 'tumblr_'.$this->blog[$url]['name'].'_permalink', $post['tumblr_url'] );
 					add_post_meta( $id, 'tumblr_'.$this->blog[$url]['name'].'_id', $post['tumblr_id'] );
-					
+
 					$this->handle_sideload($post);
 				}
 
@@ -534,10 +534,10 @@ class Tumblr_Import extends WP_Importer_Cron {
 				$this->blog[$url]['pages_complete']++;
 				$this->save_vars();
 			} while ( false != ($post = next($imported_pages) ) );
-		}		
+		}
 		$this->blog[$url]['progress'] = 'finish';
 	}
-	
+
 	function handle_sideload_import($post, $source, $description = '', $filename = false) {
 		// Make a HEAD request to get the filename:
 		if ( empty($filename) ) {
@@ -547,7 +547,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 				$filename = preg_replace('!\?.*!', '', basename($source) ); // Strip off the Query vars
 			}
 		}
-		
+
 		// still empty? Darned inconsistent tumblr...
 		if ( empty($filename) ) {
 			$path = parse_url($source,PHP_URL_PATH);
@@ -616,9 +616,9 @@ class Tumblr_Import extends WP_Importer_Cron {
 				//$post['post_content'] .= "\n" . $post['post_content']; // the [caption] shortcode doesn't allow HTML, but this might have some extra markup
 				wp_update_post($post);
 			}
-			
+
 			break;
-		
+
 		case 'audio':
 			// Handle Tumblr Hosted Audio
 			if ( isset( $post['media']['audio'] ) ) {
@@ -638,7 +638,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 			do_action( 'tumblr_importer_metadata', $post );
 			wp_update_post($post);
 			break;
-			
+
 		case 'video':
 			// Handle Tumblr hosted video
 			if ( isset( $post['media']['video'] ) ) {
@@ -646,7 +646,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 				if ( is_wp_error($id) )
 					return $id;
 
-				// @TODO: Check/change this to embed the imported video.				
+				// @TODO: Check/change this to embed the imported video.
 				$link = wp_get_attachment_link($id) . "\n" . $post['post_content'];
 				$post['post_content'] = $link;
 				$post['meta']['attribution'] = $link;
@@ -668,18 +668,18 @@ class Tumblr_Import extends WP_Importer_Cron {
 
 		return true; // all processed
 	}
-	
-	
-	/** 
+
+
+	/**
 	 * Get a request token from the OAuth endpoint (also serves as a test)
 	 *
 	 */
 	 function oauth_get_request_token() {
 		if ( empty($this->consumerkey) || empty ($this->secretkey) )
 			return false;
-	 	
-	 	$url = 'http://www.tumblr.com/oauth/request_token';
-	 
+
+	 	$url = 'https://www.tumblr.com/oauth/request_token';
+
 	 	$params = array('oauth_callback' => self_admin_url('admin.php?import=tumblr'),
 	 			'oauth_consumer_key' => $this->consumerkey,
 	 			"oauth_version" => "1.0",
@@ -687,14 +687,14 @@ class Tumblr_Import extends WP_Importer_Cron {
 	 			"oauth_timestamp" => time(),
 	 			"oauth_signature_method" => "HMAC-SHA1",
 	 			);
-	 	
+
 	 	$params['oauth_signature'] = $this->oauth_signature(array($this->secretkey,''), 'POST', $url, $params);
-	 	
+
 	 	$response = wp_remote_post( $url, array('body' => $params));
-	 	
+
 	 	return $response;
 	 }
-	 
+
 	/**
 	 * Fetch a list of blogs for a user
 	 *
@@ -703,9 +703,9 @@ class Tumblr_Import extends WP_Importer_Cron {
 	 * @returns array of blog info or a WP_Error
 	 */
 	function get_blogs() {
-		$url = 'http://api.tumblr.com/v2/user/info';
+		$url = 'https://api.tumblr.com/v2/user/info';
 		$response = $this->oauth_get_request($url);
-		
+
 		switch ( $response->meta->status ) {
 			case 403: // Bad Username / Password
 				do_action( 'tumblr_importer_handle_error', 'get_blogs_403' );
@@ -750,8 +750,8 @@ class Tumblr_Import extends WP_Importer_Cron {
 	function fetch_posts($url, $start=0, $count = 50, $email = null, $password = null, $state = null ) {
 		$url = parse_url( $url, PHP_URL_HOST );
 		$post_type = apply_filters( 'tumblr_post_type', '' );
-		$url = trailingslashit( "http://api.tumblr.com/v2/blog/$url/posts/$post_type" );
-		
+		$url = trailingslashit( "https://api.tumblr.com/v2/blog/$url/posts/$post_type" );
+
 		do_action( 'tumblr_importer_pre_fetch_posts' );
 
 		// These extra params hose up the auth if passed for oauth requests e.g. for drafts, so use them only for normal posts.
@@ -784,7 +784,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 			$post['post_date'] = date( 'Y-m-d H:i:s', strtotime ( (string) $tpost->date ) );
 			$post['post_date_gmt'] = date( 'Y-m-d H:i:s', strtotime ( (string) $tpost->date ) );
 			$post['post_name'] = (string) $tpost->slug;
-			if ( 'private' == $tpost->state ) 
+			if ( 'private' == $tpost->state )
 				$post['private'] = (string) $tpost->state;
 			if ( isset( $tpost->tags ) ) {
 				$post['tags_input'] = array();
@@ -845,7 +845,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 					$post['post_content'] = '';
 
 					$video = array_shift( $tpost->player );
-				
+
 					if ( false !== strpos( (string) $video->embed_code, 'embed' ) ) {
 						if ( preg_match_all('/<embed (.+?)>/', (string) $video->embed_code, $matches) ) {
 							foreach ($matches[1] as $match) {
@@ -872,7 +872,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 						// @todo: See if the video source is going to be oEmbed'able before adding the flash player
 						$post['post_content'] .= $video->embed_code;
 					}
-	
+
 					$post['post_content'] .= "\n" . (string) $tpost->caption;
 					break;
 				case 'answer':
@@ -933,7 +933,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 
 		return $pages;
 	}
-	
+
 	function filter_format_post( $_post ) {
 		if ( isset( $_post['meta']['attribution'] ) ) {
 			$attribution = $_post['meta']['attribution'];
@@ -941,7 +941,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 				$attribution = sprintf( '<a href="%s">%s</a>', $_post['meta']['attribution'], $_post['meta']['attribution'] );
 			$_post['post_content'] .= sprintf( '<div class="attribution">(<span>' . __( 'Source:', 'tumblr-importer' ) . '</span> %s)</div>', $attribution );
 		}
-		
+
 		return $_post;
 	}
 
@@ -950,9 +950,9 @@ class Tumblr_Import extends WP_Importer_Cron {
 			foreach ( $_post['meta'] as $key => $val ) {
 				add_post_meta( $_post['ID'], 'tumblr_' . $key, $val );
 			}
-		}					
+		}
 	}
-	
+
 	/*
 	 * When galleries have no caption, the post_content field is empty, which
 	 * along with empty title and excerpt causes the post not to insert.
@@ -961,11 +961,11 @@ class Tumblr_Import extends WP_Importer_Cron {
 	function filter_allow_empty_content( $maybe_empty, $_post ) {
 		if ( 'gallery' == $_post['format'] )
 			return false;
-		
+
 		return $maybe_empty;
 	}
-	
-	
+
+
 	/**
 	 * OAuth Signature creation
 	 */
@@ -981,13 +981,13 @@ class Tumblr_Import extends WP_Importer_Cron {
 			$secret[1] = '';
 		}
 		$secret = $this->_urlencode_rfc3986($secret[0])."&".$this->_urlencode_rfc3986($secret[1]);
-		$oauth_signature = base64_encode(hash_hmac('sha1', $baseString, $secret, TRUE));	
+		$oauth_signature = base64_encode(hash_hmac('sha1', $baseString, $secret, TRUE));
 		return $oauth_signature;
 	}
 
 	/**
 	 * Helper function for OAuth Signature creation
-	 */	
+	 */
 	function _urlencode_rfc3986($input)
 	{
 		if (is_array($input)) {
@@ -998,14 +998,14 @@ class Tumblr_Import extends WP_Importer_Cron {
 			return '';
 		}
 	}
-	
+
 	/**
 	 * Do a GET request with the access tokens
 	 */
 	function oauth_get_request($url) {
-		if ( empty( $this->access_tokens ) ) 
+		if ( empty( $this->access_tokens ) )
 			return false;
-	
+
 		$params = array('oauth_consumer_key' => $this->get_consumer_key(),
 				"oauth_nonce" => time(),
 				"oauth_timestamp" => time(),
@@ -1019,7 +1019,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 		$url = add_query_arg( array_map('urlencode', $params), $url);
 
 		$response = wp_remote_get( $url );
-		
+
 		if ( is_wp_error( $response ) || 200 != wp_remote_retrieve_response_code( $response ) ) {
 			return false;
 		} else {
@@ -1028,6 +1028,6 @@ class Tumblr_Import extends WP_Importer_Cron {
 		}
 	}
 
-	
+
 }
 }
