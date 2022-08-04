@@ -5,7 +5,7 @@ Plugin URI: http://wordpress.org/extend/plugins/tumblr-importer/
 Description: Import posts from a Tumblr blog.
 Author: wordpressdotorg
 Author URI: http://wordpress.org/
-Version: 0.8
+Version: 0.9
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 Text Domain: tumblr-importer
 Domain Path: /languages
@@ -337,6 +337,9 @@ class Tumblr_Import extends WP_Importer_Cron {
 	}
 
 	function do_blog_import($url) {
+		if ( !defined('WP_IMPORTING') ) {
+			define('WP_IMPORTING', true);
+		}
 
 		// default to the done state
 		$done = true;
