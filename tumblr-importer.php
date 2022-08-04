@@ -92,6 +92,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 			<p><?php _e('We have saved some information about your Tumblr account in your WordPress database. Clearing this information will allow you to start over. Restarting will not affect any posts you have already imported. If you attempt to re-import a blog, duplicate posts will be skipped.', 'tumblr-importer'); ?></p>
 			<p><?php _e('Note: This will stop any import currently in progress.', 'tumblr-importer'); ?></p>
 			<form method='post' action='?import=tumblr&amp;noheader=true'>
+			<?php wp_nonce_field( 'tumblr-import' ); ?>
 			<p class='submit' style='text-align:left;'>
 			<input type='submit' class='button' value='<?php esc_attr_e('Clear account information', 'tumblr-importer'); ?>' name='restart' />
 			</p>
@@ -123,6 +124,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 		<p><?php _e('After creating the application, copy and paste the "OAuth Consumer Key" and "Secret Key" into the given fields below.', 'tumblr-importer'); ?></p>
 
 		<form action='?import=tumblr' method='post'>
+			<?php wp_nonce_field( 'tumblr-import' ); ?>
 			<table class="form-table">
 				<tr>
 					<th scope="row"><label for='consumerkey'><?php _e('OAuth Consumer Key:','tumblr-importer'); ?></label></label></th>
@@ -149,6 +151,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 	}
 
 	function check_credentials() {
+		check_admin_referer( 'tumblr-import' );
 		if ( !( $response = $this->oauth_get_request_token() ) )
 			return;
 
@@ -328,6 +331,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 	}
 
 	function restart() {
+		check_admin_referer( 'tumblr-import' );
 		delete_option(get_class($this));
 		wp_redirect('?import=tumblr');
 	}
