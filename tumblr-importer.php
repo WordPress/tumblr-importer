@@ -102,12 +102,16 @@ class Tumblr_Import extends WP_Importer_Cron {
 	}
 
 	function greet($error=null) {
-
 		if ( !empty( $error ) )
 			echo "<div class='error'><p>{$error}</p></div>";
 		?>
 
-		<div class='wrap'><?php echo screen_icon(); ?>
+		<div class='wrap'>
+		<?php
+		if ( version_compare(get_bloginfo('version'), '3.8.0', '<') ) {
+			screen_icon();
+		}
+		?>
 		<h2><?php _e('Import Tumblr', 'tumblr-importer'); ?></h2>
 		<?php if ( empty($this->request_tokens) ) { ?>
 		<p><?php _e('Howdy! This importer allows you to import posts from your Tumblr account into your WordPress site.', 'tumblr-importer'); ?></p>
