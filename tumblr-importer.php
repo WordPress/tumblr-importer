@@ -218,9 +218,14 @@ class Tumblr_Import extends WP_Importer_Cron {
 		if ( !empty( $error ) )
 			echo "<div class='error'><p>{$error}</p></div>";
 
-		$authors = get_users( array('who' => 'authors') );
+		$authors = get_users( version_compare(get_bloginfo('version'), '5.9.0', '<') ? array('who' => 'authors') : array('capability' => 'edit_posts') );
 		?>
-		<div class='wrap'><?php echo screen_icon(); ?>
+		<div class='wrap'>
+		<?php
+		if ( version_compare(get_bloginfo('version'), '3.8.0', '<') ) {
+			screen_icon();
+		}
+		?>
 		<h2><?php _e('Import Tumblr', 'tumblr-importer'); ?></h2>
 		<p><?php _e('Please select the Tumblr blog you would like to import into your WordPress site and then click on the "Import this Blog" button to continue.'); ?></p>
 		<p><?php _e('If your import gets stuck for a long time or you would like to import from a different Tumblr account instead then click on the "Clear account information" button below to reset the importer.','tumblr-importer'); ?></p>
