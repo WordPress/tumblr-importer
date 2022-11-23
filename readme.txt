@@ -2,8 +2,8 @@
 Contributors: wordpressdotorg, Otto42, dd32, westi, dllh
 Tags: tumblr, import
 Requires at least: 3.2
-Tested up to: 6.0
-Stable tag: 0.9
+Tested up to: 6.1
+Stable tag: 1.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -25,11 +25,14 @@ Imports a Tumblr blog into a WordPress blog.
 
 == Upgrade Notice ==
 
-Version 0.9 Removes untested warning for the plugin. 
+Version 0.9 Removes untested warning for the plugin.
 
 == Changelog ==
 
-= 0.9 = 
+= 1.0 =
+* Add support for WordPress 6.1.
+
+= 0.9 =
 * Force WP_IMPORTING to true during the do_blog_import process.
 
 = 0.8 =
@@ -55,13 +58,13 @@ Version 0.9 Removes untested warning for the plugin.
 * Import Media to server (Images, Audio, Custom uploaded Video's)
 * Set the date on Media imports for easier management
 
-= 0.3 = 
+= 0.3 =
 * Handle multi-image posts
 * Handle question/answer posts
 * Handle video posts somewhat better
 * Speedup (reduce importer delay from 3 minutes to 1 minute)
 
-= 0.2 = 
+= 0.2 =
 * The audio, video, and image formats no longer use the caption for the titles. Tumblr seems to facilitate putting all sorts of crazy stuff into the caption fields as part of their reblogging system. So instead, these types of posts will have no titles at all. Sorry, but Tumblr simply doesn't have any sort of title fields here to work with, and no data that can be used to "create" a title for them.
 * Minor debug error cleanup.
 * Sideloading now done on drafts and pages as well.
