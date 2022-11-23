@@ -218,7 +218,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 		if ( !empty( $error ) )
 			echo "<div class='error'><p>{$error}</p></div>";
 
-		$authors = get_users( version_compare(get_bloginfo('version'), '5.9.0', '<') ? array('who' => 'authors') : array('capability' => 'edit_posts') );
+		$authors = get_users( version_compare( get_bloginfo( 'version'), '5.9.0', '<' ) ? array( 'who' => 'authors' ) : array( 'capability' => 'edit_posts' ) );
 		?>
 		<div class='wrap'>
 		<?php
