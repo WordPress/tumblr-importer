@@ -58,10 +58,13 @@ class Tumblr_Import extends WP_Importer_Cron {
 
 	// Figures out what to do, then does it.
 	function start() {
-		if ( isset($_POST['restart']) )
+		if ( isset($_POST['restart']) ) {
 			$this->restart();
+		}
 
-		if ( !isset($this->error) ) $this->error = null;
+		if ( !isset($this->error) ) {
+			$this->error = null;
+		}
 
 		@ $this->consumerkey = defined ('TUMBLR_CONSUMER_KEY') ? TUMBLR_CONSUMER_KEY : ( !empty($_POST['consumerkey']) ? $_POST['consumerkey'] : $this->consumerkey );
 		@ $this->secretkey = defined ('TUMBLR_SECRET_KEY') ? TUMBLR_SECRET_KEY : ( !empty($_POST['secretkey']) ? $_POST['secretkey'] : $this->secretkey );
@@ -85,7 +88,11 @@ class Tumblr_Import extends WP_Importer_Cron {
 
 		unset ($this->error);
 
-		if ( !isset($_POST['restart']) ) $saved = $this->save_vars();
+		$saved = false;
+
+		if ( !isset($_POST['restart']) ) {
+			$saved = $this->save_vars();
+		}
 
 		if ( $saved && !isset($_GET['noheader']) ) {
 			?>
