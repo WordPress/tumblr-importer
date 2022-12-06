@@ -982,7 +982,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 	 * Here we override the default behavior.
 	 */
 	function filter_allow_empty_content( $maybe_empty, $_post ) {
-		if ( 'gallery' == $_post['format'] )
+		if ( ! empty( $_post['format'] ) && 'gallery' == $_post['format'] )
 			return false;
 
 		return $maybe_empty;
