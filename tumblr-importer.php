@@ -5,7 +5,7 @@ Plugin URI: http://wordpress.org/extend/plugins/tumblr-importer/
 Description: Import posts from a Tumblr blog.
 Author: wordpressdotorg
 Author URI: http://wordpress.org/
-Version: 0.9
+Version: 1.0
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 Text Domain: tumblr-importer
 Domain Path: /languages
@@ -58,10 +58,13 @@ class Tumblr_Import extends WP_Importer_Cron {
 
 	// Figures out what to do, then does it.
 	function start() {
-		if ( isset($_POST['restart']) )
+		if ( isset($_POST['restart']) ) {
 			$this->restart();
+		}
 
-		if ( !isset($this->error) ) $this->error = null;
+		if ( !isset($this->error) ) {
+			$this->error = null;
+		}
 
 		@ $this->consumerkey = defined ('TUMBLR_CONSUMER_KEY') ? TUMBLR_CONSUMER_KEY : ( !empty($_POST['consumerkey']) ? $_POST['consumerkey'] : $this->consumerkey );
 		@ $this->secretkey = defined ('TUMBLR_SECRET_KEY') ? TUMBLR_SECRET_KEY : ( !empty($_POST['secretkey']) ? $_POST['secretkey'] : $this->secretkey );
@@ -85,7 +88,11 @@ class Tumblr_Import extends WP_Importer_Cron {
 
 		unset ($this->error);
 
-		if ( !isset($_POST['restart']) ) $saved = $this->save_vars();
+		$saved = false;
+
+		if ( !isset($_POST['restart']) ) {
+			$saved = $this->save_vars();
+		}
 
 		if ( $saved && !isset($_GET['noheader']) ) {
 			?>
@@ -102,12 +109,16 @@ class Tumblr_Import extends WP_Importer_Cron {
 	}
 
 	function greet($error=null) {
-
 		if ( !empty( $error ) )
 			echo "<div class='error'><p>{$error}</p></div>";
 		?>
 
-		<div class='wrap'><?php echo screen_icon(); ?>
+		<div class='wrap'>
+		<?php
+		if ( version_compare( get_bloginfo( 'version' ), '3.8.0', '<' ) ) {
+			screen_icon();
+		}
+		?>
 		<h2><?php _e('Import Tumblr', 'tumblr-importer'); ?></h2>
 		<?php if ( empty($this->request_tokens) ) { ?>
 		<p><?php _e('Howdy! This importer allows you to import posts from your Tumblr account into your WordPress site.', 'tumblr-importer'); ?></p>
@@ -214,9 +225,14 @@ class Tumblr_Import extends WP_Importer_Cron {
 		if ( !empty( $error ) )
 			echo "<div class='error'><p>{$error}</p></div>";
 
-		$authors = get_users( array('who' => 'authors') );
+		$authors = get_users( version_compare( get_bloginfo( 'version' ), '5.9.0', '<' ) ? array( 'who' => 'authors' ) : array( 'capability' => 'edit_posts' ) );
 		?>
-		<div class='wrap'><?php echo screen_icon(); ?>
+		<div class='wrap'>
+		<?php
+		if ( version_compare( get_bloginfo( 'version' ), '3.8.0', '<' ) ) {
+			screen_icon();
+		}
+		?>
 		<h2><?php _e('Import Tumblr', 'tumblr-importer'); ?></h2>
 		<p><?php _e('Please select the Tumblr blog you would like to import into your WordPress site and then click on the "Import this Blog" button to continue.'); ?></p>
 		<p><?php _e('If your import gets stuck for a long time or you would like to import from a different Tumblr account instead then click on the "Clear account information" button below to reset the importer.','tumblr-importer'); ?></p>
@@ -966,7 +982,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 	 * Here we override the default behavior.
 	 */
 	function filter_allow_empty_content( $maybe_empty, $_post ) {
-		if ( 'gallery' == $_post['format'] )
+		if ( ! empty( $_post['format'] ) && 'gallery' == $_post['format'] )
 			return false;
 
 		return $maybe_empty;
