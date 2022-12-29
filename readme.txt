@@ -29,6 +29,9 @@ Version 0.9 Removes untested warning for the plugin.
 
 == Changelog ==
 
+= Unreleased =
+* Fix Tumblr bug with custom domains
+
 = 1.0 =
 * Add support for WordPress 6.1.
 
