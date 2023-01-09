@@ -281,7 +281,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 			// Check to see if this url is a custom domain. The API doesn't play nicely with these
 			// (intermittently returns 408 status), so make the user disable the custom domain
 			// before importing.
-			if ( !preg_match( '|tumblr.com/$|', $url ) ) {
+			if ( !preg_match( '|tumblr.com/|', $url ) ) {
 				$submit = '<nobr><img src="' . admin_url( 'images/no.png' ) . '" style="vertical-align:top; padding: 0 4px;" alt="' . __( 'Tumblr Blogs with Custom Domains activated cannot be imported, please disable the custom domain first.', 'tumblr-importer' ) . '" title="' . __( 'Tumblr Blogs with Custom Domains activated cannot be imported, please disable the custom domain first.', 'tumblr-importer' ) . '" /><span style="cursor: pointer;" title="' . __( 'Tumblr Blogs with Custom Domains activated cannot be imported, please disable the custom domain first.' ) . '">' . __( 'Custom Domain', 'tumblr-importer' ) . '</nobr></span>';
 				$custom_domains = true;
 			}
@@ -749,13 +749,40 @@ class Tumblr_Import extends WP_Importer_Cron {
 			$blog['drafts'] = (int) $tblog->drafts;
 			$blog['queued'] = (int) $tblog->queue;
 			$blog['avatar'] = '';
-			$blog['url'] = (string) $tblog->url;
+			$blog['url'] = (string) $this->sanitize_blog_url( $tblog->url );
 			$blog['name'] = (string) $tblog->name;
 
 			$blogs[] = $blog;
 		}
 		$this->blogs = $blogs;
 		return $this->blogs;
+	}
+
+	/**
+	 * Tumblr seems to return blogs with /blog/view in the URL, which is not
+	 * a valid URL. This function strips that out.
+	 *
+	 * It also converts urls of the form https://tumblr.com/<id> to https://</id>.tumblr.com/
+	 * which is the only form the API seems to accept as valid.
+	 *
+	 * @param $url
+	 */
+	private function sanitize_blog_url( $url ) {
+		if ( preg_match( '|tumblr.com/|', $url ) ) {
+			// trim any /blog/view parts
+			$url = preg_replace( '/\/blog\/view/', '', $url );
+
+			// parse the URL to extract the path component
+			$parsed_url = parse_url( $url );
+			$path = $parsed_url['path'];
+
+			// extract the ID from the path by removing the leading '/'
+			$id = ltrim( $path, '/' );
+
+			return "https://{$id}.tumblr.com/";
+		}
+
+		return $url;
 	}
 
 	function get_consumer_key() {
