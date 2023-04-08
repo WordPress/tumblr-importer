@@ -2,8 +2,8 @@
 Contributors: wordpressdotorg, Otto42, dd32, westi, dllh
 Tags: tumblr, import
 Requires at least: 3.2
-Tested up to: 6.1
-Stable tag: 1.0
+Tested up to: 6.2
+Stable tag: 1.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -29,7 +29,8 @@ Version 0.9 Removes untested warning for the plugin.
 
 == Changelog ==
 
-= Unreleased =
+= 1.1 =
+* Testing the plugin up to WordPress 6.2
 * Fix Tumblr bug with custom domains
 
 = 1.0 =
