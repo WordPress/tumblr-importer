@@ -759,29 +759,29 @@ class Tumblr_Import extends WP_Importer_Cron {
 	}
 
 	/**
-	 * Tumblr seems to return blogs with /blog/view in the URL, which is not
-	 * a valid URL. This function strips that out.
+	 * Make sure the URL of the tumblr blog is in the correct format.
 	 *
-	 * It also converts urls of the form https://tumblr.com/<id> to https://</id>.tumblr.com/
-	 * which is the only form the API seems to accept as valid.
+	 * If the URL is in the format https://tumblr.com/blogname, then we need to convert it to https://blogname.tumblr.com.
+	 * If the URL is in the format https://blogname.tumblr.com, we don't need to do anything.
+	 * Finally, we skip sanitizing custom Tumblr domains.
 	 *
-	 * @param $url
+	 * @param string $url URL of Tumblr blog returned by the API.
+	 *
+	 * @return string
 	 */
 	private function sanitize_blog_url( $url ) {
-		if ( preg_match( '|tumblr.com/|', $url ) ) {
-			// trim any /blog/view parts
-			$url = preg_replace( '/\/blog\/view/', '', $url );
 
-			// parse the URL to extract the path component
-			$parsed_url = parse_url( $url );
-			$path = $parsed_url['path'];
-
-			// extract the ID from the path by removing the leading '/'
-			$id = ltrim( $path, '/' );
-
-			return "https://{$id}.tumblr.com/";
+		// If the URL is already in a valid format, just return it.
+		if ( preg_match( '#^https://.*?\.tumblr.com/?$#', $url ) ) {
+			return $url;
 		}
 
+		// If the URL is not in a correct format, we compose the new one with the short name of the blog.
+		if ( preg_match( '#^https://(?:www\.)?tumblr.com/(?:blog/view/)?(?P<id>.+?)/?$#', $url, $matches ) ) {
+			return sprintf( 'https://%s.tumblr.com/', $matches['id'] );
+		}
+
+		// Or, just return the original URL.
 		return $url;
 	}
 
