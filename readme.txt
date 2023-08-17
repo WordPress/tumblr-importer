@@ -3,7 +3,7 @@ Contributors: wordpressdotorg, Otto42, dd32, westi, dllh
 Tags: tumblr, import
 Requires at least: 3.2
 Tested up to: 6.3
-Stable tag: 1.2
+Stable tag: 1.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -28,9 +28,6 @@ Imports a Tumblr blog into a WordPress blog.
 Version 0.9 Removes untested warning for the plugin.
 
 == Changelog ==
-
-= 1.2 =
-* Testing the plugin up to WordPress 6.3
 
 = 1.1 =
 * Testing the plugin up to WordPress 6.2
