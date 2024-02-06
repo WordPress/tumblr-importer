@@ -1,12 +1,12 @@
 <?php
 /*
 Plugin Name: Tumblr Importer
-Plugin URI: http://wordpress.org/extend/plugins/tumblr-importer/
+Plugin URI: https://wordpress.org/extend/plugins/tumblr-importer/
 Description: Import posts from a Tumblr blog.
 Author: wordpressdotorg
-Author URI: http://wordpress.org/
+Author URI: https://wordpress.org/
 Version: 1.1
-License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+License: GPL v2 - https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 Text Domain: tumblr-importer
 Domain Path: /languages
 */
@@ -904,7 +904,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 							}
 
 							// special case for weird youtube vids
-							$embed['src'] = preg_replace( '|http://www.youtube.com/v/([a-zA-Z0-9_]+).*|i', 'http://www.youtube.com/watch?v=$1', $embed['src'] );
+							$embed['src'] = preg_replace( '|https://www.youtube.com/v/([a-zA-Z0-9_]+).*|i', 'https://www.youtube.com/watch?v=$1', $embed['src'] );
 
 							// TODO find other special cases, since tumblr is full of them
 							$post['post_content'] = $embed['src'];
@@ -912,11 +912,11 @@ class Tumblr_Import extends WP_Importer_Cron {
 
 						// Sometimes, video-source contains iframe markup.
 						if ( preg_match( '/<iframe/', $video->embed_code ) ) {
-							$embed['src'] = preg_replace( '|<iframe.*src="http://www.youtube.com/embed/([a-zA-Z0-9_\-]+)\??.*".*</iframe>|', 'http://www.youtube.com/watch?v=$1', $video->embed_code );
+							$embed['src'] = preg_replace( '|<iframe.*src="https://www.youtube.com/embed/([a-zA-Z0-9_\-]+)\??.*".*</iframe>|', 'https://www.youtube.com/watch?v=$1', $video->embed_code );
 							$post['post_content'] = $embed['src'];
 						}
 					} elseif ( preg_match( '/<iframe.*vimeo/', $video->embed_code ) ) {
-						$embed['src'] = preg_replace( '|<iframe.*src="(http://player.vimeo.com/video/([a-zA-Z0-9_\-]+))\??.*".*</iframe>.*|', 'http://vimeo.com/$2', $video->embed_code );
+						$embed['src'] = preg_replace( '|<iframe.*src="(https://player.vimeo.com/video/([a-zA-Z0-9_\-]+))\??.*".*</iframe>.*|', 'https://vimeo.com/$2', $video->embed_code );
 						$post['post_content'] = $embed['src'];
 					} else {
 						// @todo: See if the video source is going to be oEmbed'able before adding the flash player
