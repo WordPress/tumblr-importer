@@ -819,6 +819,10 @@ class Tumblr_Import extends WP_Importer_Cron {
 		switch ( $response->meta->status ) {
 			case 200: // OK
 				break;
+			case 420: // rate limited
+			case 429: // rate limited
+				// make this chill for a minute
+				return false;
 			default:
 				$_error = sprintf( __( 'Tumblr replied with an error: %s', 'tumblr-importer' ), $response->meta->msg );
 				do_action( 'tumblr_importer_handle_error', 'response_' . $response->meta->status );
