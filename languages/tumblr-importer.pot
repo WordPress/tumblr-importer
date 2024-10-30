@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Tumblr Importer 0.6\n"
-"Report-Msgid-Bugs-To: http://wordpress.org/tag/tumblr-importer\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/tag/tumblr-importer\n"
 "POT-Creation-Date: 2012-06-14 15:24:25+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -201,7 +201,7 @@ msgid "Tumblr Importer"
 msgstr ""
 
 #. Plugin URI of the plugin/theme
-msgid "http://wordpress.org/extend/plugins/tumblr-importer/"
+msgid "https://wordpress.org/extend/plugins/tumblr-importer/"
 msgstr ""
 
 #. Author of the plugin/theme
@@ -209,5 +209,5 @@ msgid "wordpressdotorg"
 msgstr ""
 
 #. Author URI of the plugin/theme
-msgid "http://wordpress.org/"
+msgid "https://wordpress.org/"
 msgstr ""
