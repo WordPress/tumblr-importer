@@ -1,0 +1,15 @@
+{
+    "require-dev": {
+        "wp-coding-standards/wpcs": "^3.1",
+        "phpcompatibility/phpcompatibility-wp": "*"
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    },
+    "scripts": {
+        "format:php": "phpcbf --standard=./.phpcs.xml --basepath=. . -v",
+        "lint:php": "phpcs --runtime-set ignore_warnings_on_exit true --standard=./.phpcs.xml --basepath=. . -v"
+    }
+}

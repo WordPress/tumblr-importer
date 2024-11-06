@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<ruleset name="WordPress.Tumblr-Importer">
+	<description>Tumblr Importer Coding Standard</description>
+
+	<arg name="parallel" value="8" />
+
+	<config name="text_domain" value="tumblr-importer" />
+
+	<exclude-pattern>vendor/</exclude-pattern>
+	<exclude-pattern>node_modules/</exclude-pattern>
+	<exclude-pattern>images/</exclude-pattern>
+
+	<rule ref="WordPress-Extra">
+		<exclude name="WordPress.Files.FileName.InvalidClassFileName" />
+	</rule>
+</ruleset>
