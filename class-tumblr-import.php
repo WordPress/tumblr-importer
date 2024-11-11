@@ -1,4 +1,8 @@
 <?php
+// no-strict-types
+/**
+ * Contains the main class for the Tumblr Importer.
+ */
 if ( class_exists( 'WP_Importer_Cron' ) ) {
 	/**
 	 * Tumblr Importer
@@ -57,8 +61,8 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 
 			do_action( 'tumblr_importer_import_start' );
 
-			@$this->consumerkey = defined( 'TUMBLR_CONSUMER_KEY' ) ? TUMBLR_CONSUMER_KEY : ( ! empty( $_POST['consumerkey'] ) ? $_POST['consumerkey'] : $this->consumerkey );
-			@$this->secretkey   = defined( 'TUMBLR_SECRET_KEY' ) ? TUMBLR_SECRET_KEY : ( ! empty( $_POST['secretkey'] ) ? $_POST['secretkey'] : $this->secretkey );
+			@$this->consumerkey = defined( 'TUMBLR_CONSUMER_KEY' ) ? TUMBLR_CONSUMER_KEY : ( ! empty( $_POST['consumerkey'] ) ? wp_unslash( sanitize_key( $_POST['consumerkey'] ) ) : $this->consumerkey );
+			@$this->secretkey   = defined( 'TUMBLR_SECRET_KEY' ) ? TUMBLR_SECRET_KEY : ( ! empty( $_POST['secretkey'] ) ? wp_unslash( sanitize_key( $_POST['secretkey'] ) ) : $this->secretkey );
 
 			// if we have access tokens, verify that they work
             // phpcs:ignore Generic.CodeAnalysis.EmptyStatement
@@ -216,7 +220,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 		 * @return void
 		 */
 		public function check_permissions() {
-			$verifier = isset( $_GET['oauth_verifier'] ) ? $_GET['oauth_verifier'] : '';
+			$verifier = isset( $_GET['oauth_verifier'] ) ? sanitize_text_field( wp_unslash( $_GET['oauth_verifier'] ) ) : '';
 
 			// get the access_tokens
 			$url = 'https://www.tumblr.com/oauth/access_token';
@@ -396,7 +400,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 		 */
 		public function start_blog_import() {
 			check_admin_referer( 'tumblr-import' );
-			$url = $_POST['blogurl'];
+			$url = isset( $_POST['blogurl'] ) ? sanitize_text_field( wp_unslash( $_POST['blogurl'] ) ) : '';
 
 			if ( ! isset( $this->blog[ $url ] ) ) {
 				$this->error = __( 'The specified blog cannot be found.', 'tumblr-importer' );
