@@ -775,7 +775,9 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 
 		/**
 		 * Handles importing any Media within the imported Post
+		 *
 		 * @param  array $post the (already) imported WP_Post
+		 *
 		 * @return void
 		 */
 		public function handle_sideload( $post ) {
@@ -798,6 +800,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 		 * and is able to retrieve a valid $post
 		 *
 		 * @param  array $post The WP_Post to update
+		 *
 		 * @return void
 		 */
 		public function handle_sideload_post_update( $post ) {
@@ -913,7 +916,9 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 
 		/**
 		 * Handles sideloading for image posts.
+		 *
 		 * @param array $post The post data.
+		 *
 		 * @return void|WP_Error
 		 */
 		private function handle_sideload_image_post( $post ) {
@@ -935,7 +940,9 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 
 		/**
 		 * Handles sideloading for audio posts.
+		 *
 		 * @param array $post The post data.
+		 *
 		 * @return void|WP_Error
 		 */
 		private function handle_sideload_audio_post( $post ) {
@@ -958,7 +965,9 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 
 		/**
 		 * Handles sideloading for video posts.
+		 *
 		 * @param array $post The post data.
+		 *
 		 * @return void|WP_Error
 		 */
 		private function handle_sideload_video_post( $post ) {
