@@ -61,8 +61,8 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 
 			do_action( 'tumblr_importer_import_start' );
 
-			@$this->consumerkey = defined( 'TUMBLR_CONSUMER_KEY' ) ? TUMBLR_CONSUMER_KEY : ( ! empty( $_POST['consumerkey'] ) ? wp_unslash( sanitize_key( $_POST['consumerkey'] ) ) : $this->consumerkey );
-			@$this->secretkey   = defined( 'TUMBLR_SECRET_KEY' ) ? TUMBLR_SECRET_KEY : ( ! empty( $_POST['secretkey'] ) ? wp_unslash( sanitize_key( $_POST['secretkey'] ) ) : $this->secretkey );
+			@$this->consumerkey = defined( 'TUMBLR_CONSUMER_KEY' ) ? TUMBLR_CONSUMER_KEY : ( ! empty( $_POST['consumerkey'] ) ? sanitize_text_field( wp_unslash( $_POST['consumerkey'] ) ) : $this->consumerkey );
+			@$this->secretkey   = defined( 'TUMBLR_SECRET_KEY' ) ? TUMBLR_SECRET_KEY : ( ! empty( $_POST['secretkey'] ) ? sanitize_text_field( wp_unslash( $_POST['secretkey'] ) ) : $this->secretkey );
 
 			// if we have access tokens, verify that they work
             // phpcs:ignore Generic.CodeAnalysis.EmptyStatement
