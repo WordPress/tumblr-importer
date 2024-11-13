@@ -61,8 +61,8 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 
 			do_action( 'tumblr_importer_import_start' );
 
-			@$this->consumerkey = defined( 'TUMBLR_CONSUMER_KEY' ) ? TUMBLR_CONSUMER_KEY : ( ! empty( $_POST['consumerkey'] ) ? sanitize_text_field( wp_unslash( $_POST['consumerkey'] ) ) : $this->consumerkey );
-			@$this->secretkey   = defined( 'TUMBLR_SECRET_KEY' ) ? TUMBLR_SECRET_KEY : ( ! empty( $_POST['secretkey'] ) ? sanitize_text_field( wp_unslash( $_POST['secretkey'] ) ) : $this->secretkey );
+			$this->consumerkey = defined( 'TUMBLR_CONSUMER_KEY' ) ? TUMBLR_CONSUMER_KEY : ( ! empty( $_POST['consumerkey'] ) ? sanitize_text_field( wp_unslash( $_POST['consumerkey'] ) ) : $this->consumerkey );
+			$this->secretkey   = defined( 'TUMBLR_SECRET_KEY' ) ? TUMBLR_SECRET_KEY : ( ! empty( $_POST['secretkey'] ) ? sanitize_text_field( wp_unslash( $_POST['secretkey'] ) ) : $this->secretkey );
 
 			// if we have access tokens, verify that they work
             // phpcs:ignore Generic.CodeAnalysis.EmptyStatement
@@ -469,6 +469,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 			check_admin_referer( 'tumblr-import' );
 			delete_option( get_class( $this ) );
 			wp_safe_redirect( '?import=tumblr' );
+			exit;
 		}
 
 		/**
@@ -545,6 +546,8 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 
 			do_action( 'tumblr_importer_import_blog_after', $url );
 
+			do_action( 'import_end', 'Tumblr' );
+
 			return $done;
 		}
 
@@ -611,7 +614,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 					do_action( 'tumblr_importer_importing_post_after', $post );
 
 					do_action( 'tumblr_importer_insert_new_post_before', $post );
-					$id = wp_insert_post( $post );
+					$id = wp_insert_post( $post, false, false );
 					do_action( 'tumblr_importer_insert_new_post_after', $post );
 
 					if ( ! is_wp_error( $id ) ) {
@@ -791,7 +794,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 				return;
 			}
 
-			return $this->{$sideload_method}( $post );
+			$this->{$sideload_method}( $post );
 		}
 
 		/**
@@ -813,7 +816,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 			do_action( 'tumblr_importer_metadata_after', $post );
 
 			do_action( 'tumblr_importer_sideload_wp_update_post_before', $post );
-			wp_update_post( $post );
+			wp_update_post( $post, false, false );
 			do_action( 'tumblr_importer_sideload_wp_update_post_after', $post );
 		}
 
@@ -825,7 +828,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 		 * @param string $description The description.
 		 * @param string $filename The filename.
 		 *
-		 * @return void|WP_Error
+		 * @return int|WP_Error
 		 */
 		public function handle_sideload_import( $post, $source, $description = '', $filename = false ) {
 			$file_array = [];
