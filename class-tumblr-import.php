@@ -294,7 +294,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 		<th><?php esc_html_e( 'URL', 'tumblr-importer' ); ?></th>
 		<th><?php esc_html_e( 'Posts Imported', 'tumblr-importer' ); ?></th>
 		<th><?php esc_html_e( 'Drafts Imported', 'tumblr-importer' ); ?></th>
-		<!--<th><?php esc_html_e( 'Queued Imported', 'tumblr-importer' ); ?></th>-->
+		<th><?php esc_html_e( 'Queued Imported', 'tumblr-importer' ); ?></th>
 		<th><?php esc_html_e( 'Pages Imported', 'tumblr-importer' ); ?></th>
 		<th><?php esc_html_e( 'Author', 'tumblr-importer' ); ?></th>
 		<th><?php esc_html_e( 'Action/Status', 'tumblr-importer' ); ?></th>
@@ -359,7 +359,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 				<td><?php echo esc_html( $blog['url'] ); ?></td>
 				<td><?php echo esc_html( $this->blog[ $url ]['posts_complete'] . ' / ' . esc_html( $this->blog[ $url ]['total_posts'] ) ); ?></td>
 				<td><?php echo esc_html( $this->blog[ $url ]['drafts_complete'] . ' / ' . esc_html( $this->blog[ $url ]['total_drafts'] ) ); ?></td>
-				<!--<td><?php echo esc_html( $this->blog[ $url ]['queued_complete'] ); ?></td>-->
+				<td><?php echo esc_html( $this->blog[ $url ]['queued_complete'] . ' / ' . esc_html( $this->blog[ $url ]['total_queued'] ) ); ?></td>
 				<td><?php echo esc_html( $this->blog[ $url ]['pages_complete'] ); ?></td>
 				<?php // The below are generated above and escaped where needed. ?>
 				<td><?php echo $author_selection; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></td>
@@ -517,9 +517,12 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 							$_progress_after = $this->blog[ $url ]['drafts_complete'];
 							break;
 						case 'queued':
-							// TODO Tumblr's API is broken for queued posts
-							$this->blog[ $url ]['progress'] = 'pages';
-							// $this->do_queued_import($url);
+							$_max_progress    = $this->blog[ $url ]['total_queued'];
+							$_progress_before = $this->blog[ $url ]['queued_complete'];
+							do_action( 'tumblr_importer_do_queued_import_before', $url );
+							$this->do_queued_import($url);
+							do_action( 'tumblr_importer_do_queued_import_after', $url );
+							$_progress_after = $this->blog[ $url ]['queued_complete'];
 							break;
 						case 'pages':
 							// TODO Tumblr's new API has no way to retrieve pages that I can find
@@ -651,7 +654,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 		}
 
 		/**
-		 * Gets the draft post type.
+		 * Gets the draft post type. This is Tumblr's Post Type, not WordPress.
 		 *
 		 * @param string $post_type The post type.
 		 *
@@ -659,6 +662,17 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 		 */
 		public function get_draft_post_type( $post_type ) {
 			return 'draft';
+		}
+
+		/**
+		 * Gets the post type for queued posts. This is Tumblr's Post Type, not WordPress.
+		 *
+		 * @param string $post_type The post type.
+		 *
+		 * @return string
+		 */
+		public function get_queued_post_type( $post_type ) {
+			return 'queue';
 		}
 
 		/**
@@ -710,7 +724,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 					$post['post_author'] = $this->blog[ $url ]['post_author'];
 
 					do_action( 'tumblr_importing_post', $post );
-					$id = wp_insert_post( $post );
+					$id = wp_insert_post( $post, false, false );
 					if ( ! is_wp_error( $id ) ) {
 						$post['ID'] = $id;
 						if ( isset( $post['format'] ) ) {
@@ -724,6 +738,75 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 					}
 
 					++$this->blog[ $url ]['drafts_complete'];
+					$this->save_vars();
+				} while ( false != ( $post = next( $imported_posts ) ) && $this->have_time() );
+			}
+		}
+
+		/**
+		 * Performs the queued posts import.
+		 *
+		 * @param string $url The URL of the blog to import.
+		 *
+		 * @return void
+		 */
+		public function do_queued_import( $url ) {
+			$start = $this->blog[ $url ]['queued_complete'];
+			$total = $this->blog[ $url ]['total_queued'];
+
+			// check for posts completion
+			if ( $start >= $total ) {
+				$this->blog[ $url ]['progress'] = 'pages';
+				return;
+			}
+
+			// get the already imported posts to prevent dupes
+			$this->dupes = $this->get_imported_posts( 'tumblr', $this->blog[ $url ]['name'] );
+
+			if ( $this->blog[ $url ]['posts_complete'] + TUMBLR_MAX_IMPORT > $total ) {
+				$count = $total - $start;
+			} else {
+				$count = TUMBLR_MAX_IMPORT;
+			}
+
+			add_filter( 'tumblr_post_type', array( $this, 'get_queued_post_type' ) );
+			$imported_posts = $this->fetch_posts( $url, $start, $count, $this->email, $this->password, 'queue' );
+
+			if ( empty( $imported_posts ) ) {
+				$this->error = __( 'Problem communicating with Tumblr, retrying later', 'tumblr-importer' );
+				return;
+			}
+
+			if ( is_array( $imported_posts ) && ! empty( $imported_posts ) ) {
+				reset( $imported_posts );
+				$post = current( $imported_posts );
+				do {
+					// skip dupes
+					if ( ! empty( $this->dupes[ $post['tumblr_url'] ] ) ) {
+						++$this->blog[ $url ]['queued_complete'];
+						$this->save_vars();
+						continue;
+					}
+
+					$post['post_status'] = 'future'; // TODO: Use Queued if the Post Queue is implemented
+					$post['post_author'] = $this->blog[ $url ]['post_author'];
+
+					do_action( 'tumblr_importing_post', $post );
+
+					$id = wp_insert_post( $post, false, false );
+					if ( ! is_wp_error( $id ) ) {
+						$post['ID'] = $id;
+						if ( isset( $post['format'] ) ) {
+							set_post_format( $id, $post['format'] );
+						}
+
+						add_post_meta( $id, 'tumblr_' . $this->blog[ $url ]['name'] . '_permalink', $post['tumblr_url'] );
+						add_post_meta( $id, 'tumblr_' . $this->blog[ $url ]['name'] . '_id', $post['tumblr_id'] );
+
+						$this->handle_sideload( $post );
+					}
+
+					++$this->blog[ $url ]['queued_complete'];
 					$this->save_vars();
 				} while ( false != ( $post = next( $imported_posts ) ) && $this->have_time() );
 			}
@@ -1147,6 +1230,15 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 				$post['post_date']     = gmdate( 'Y-m-d H:i:s', strtotime( (string) $tpost->date ) );
 				$post['post_date_gmt'] = gmdate( 'Y-m-d H:i:s', strtotime( (string) $tpost->date ) );
 				$post['post_name']     = (string) $tpost->slug;
+
+				if('queued' === $tpost->state) {
+					$post['post_status'] = 'future';
+					$blog_timezone_offset = get_option('gmt_offset');
+					$scheduled_time = (int) $tpost->scheduled_publish_time + ($blog_timezone_offset * 3600);
+					$post['post_date'] = gmdate( 'Y-m-d H:i:s', $scheduled_time );
+					$post['post_date_gmt'] = get_gmt_from_date( $post['post_date'] );
+				}
+
 				if ( 'private' === $tpost->state ) {
 					$post['private'] = (string) $tpost->state;
 				}
