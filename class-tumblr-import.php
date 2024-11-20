@@ -1,4 +1,8 @@
 <?php
+// no-strict-types
+/**
+ * Contains the main class for the Tumblr Importer.
+ */
 if ( class_exists( 'WP_Importer_Cron' ) ) {
 	/**
 	 * Tumblr Importer
@@ -9,6 +13,13 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 	class Tumblr_Import extends WP_Importer_Cron {
 
 		/**
+		 * List of duplicate posts
+		 *
+		 * @var array
+		 */
+		public $dupes = array();
+
+		/**
 		 * Constructor
 		 */
 		public function __construct() {
@@ -16,7 +27,21 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 			add_filter( 'tumblr_importer_format_post', array( $this, 'filter_format_post' ) );
 			add_filter( 'tumblr_importer_get_consumer_key', array( $this, 'get_consumer_key' ) );
 			add_filter( 'wp_insert_post_empty_content', array( $this, 'filter_allow_empty_content' ), 10, 2 );
+
 			parent::__construct();
+
+			add_action( 'tumblr_importer_import_instructions', array( $this, 'instructions' ) );
+
+			$this->tumblr_importer_init();
+		}
+
+		/**
+		 * Initializes the Tumblr importer.
+		 *
+		 * @return void
+		 */
+		public function tumblr_importer_init() {
+			do_action( 'tumblr_importer_init' );
 		}
 
 		/**
@@ -34,8 +59,10 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 				$this->error = null;
 			}
 
-			@$this->consumerkey = defined( 'TUMBLR_CONSUMER_KEY' ) ? TUMBLR_CONSUMER_KEY : ( ! empty( $_POST['consumerkey'] ) ? $_POST['consumerkey'] : $this->consumerkey );
-			@$this->secretkey   = defined( 'TUMBLR_SECRET_KEY' ) ? TUMBLR_SECRET_KEY : ( ! empty( $_POST['secretkey'] ) ? $_POST['secretkey'] : $this->secretkey );
+			do_action( 'tumblr_importer_import_start' );
+
+			$this->consumerkey = defined( 'TUMBLR_CONSUMER_KEY' ) ? TUMBLR_CONSUMER_KEY : ( ! empty( $_POST['consumerkey'] ) ? sanitize_text_field( wp_unslash( $_POST['consumerkey'] ) ) : $this->consumerkey );
+			$this->secretkey   = defined( 'TUMBLR_SECRET_KEY' ) ? TUMBLR_SECRET_KEY : ( ! empty( $_POST['secretkey'] ) ? sanitize_text_field( wp_unslash( $_POST['secretkey'] ) ) : $this->secretkey );
 
 			// if we have access tokens, verify that they work
             // phpcs:ignore Generic.CodeAnalysis.EmptyStatement
@@ -64,7 +91,17 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 			}
 
 			if ( $saved && ! isset( $_GET['noheader'] ) ) {
-				?>
+				$this->saved_info_display();
+			}
+		}
+
+		/**
+		 * Displays the saved info screen.
+		 *
+		 * @return void
+		 */
+		public function saved_info_display() {
+			?>
 			<p><?php esc_html_e( 'We have saved some information about your Tumblr account in your WordPress database. Clearing this information will allow you to start over. Restarting will not affect any posts you have already imported. If you attempt to re-import a blog, duplicate posts will be skipped.', 'tumblr-importer' ); ?></p>
 			<p><?php esc_html_e( 'Note: This will stop any import currently in progress.', 'tumblr-importer' ); ?></p>
 			<form method='post' action='?import=tumblr&amp;noheader=true'>
@@ -73,8 +110,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 			<input type='submit' class='button' value='<?php esc_attr_e( 'Clear account information', 'tumblr-importer' ); ?>' name='restart' />
 			</p>
 			</form>
-				<?php
-			}
+			<?php
 		}
 
 		/**
@@ -184,8 +220,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 		 * @return void
 		 */
 		public function check_permissions() {
-			$verifier = $_GET['oauth_verifier'];
-			$token    = $_GET['oauth_token'];
+			$verifier = isset( $_GET['oauth_verifier'] ) ? sanitize_text_field( wp_unslash( $_GET['oauth_verifier'] ) ) : '';
 
 			// get the access_tokens
 			$url = 'https://www.tumblr.com/oauth/access_token';
@@ -247,8 +282,9 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 			}
 			?>
 		<h2><?php esc_html_e( 'Import Tumblr', 'tumblr-importer' ); ?></h2>
-		<p><?php esc_html_e( 'Please select the Tumblr blog you would like to import into your WordPress site and then click on the "Import this Blog" button to continue.', 'tumblr-importer' ); ?></p>
-		<p><?php esc_html_e( 'If your import gets stuck for a long time or you would like to import from a different Tumblr account instead then click on the "Clear account information" button below to reset the importer.', 'tumblr-importer' ); ?></p>
+
+			<?php do_action( 'tumblr_importer_import_instructions' ); ?>
+
 			<?php if ( 1 < count( $authors ) ) : ?>
 			<p><?php esc_html_e( 'As Tumblr does not expose the "author", even from multi-author blogs you will need to select which WordPress user will be listed as the author of the imported posts.', 'tumblr-importer' ); ?></p>
 		<?php endif; ?>
@@ -346,13 +382,25 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 		}
 
 		/**
+		 * Displays the instructions.
+		 *
+		 * @return void
+		 */
+		public function instructions() {
+			?>
+			<p><?php esc_html_e( 'Please select the Tumblr blog you would like to import into your WordPress site and then click on the "Import this Blog" button to continue.', 'tumblr-importer' ); ?></p>
+			<p><?php esc_html_e( 'If your import gets stuck for a long time or you would like to import from a different Tumblr account instead then click on the "Clear account information" button below to reset the importer.', 'tumblr-importer' ); ?></p>
+			<?php
+		}
+
+		/**
 		 * Starts the blog import.
 		 *
 		 * @return void
 		 */
 		public function start_blog_import() {
 			check_admin_referer( 'tumblr-import' );
-			$url = $_POST['blogurl'];
+			$url = isset( $_POST['blogurl'] ) ? sanitize_text_field( wp_unslash( $_POST['blogurl'] ) ) : '';
 
 			if ( ! isset( $this->blog[ $url ] ) ) {
 				$this->error = __( 'The specified blog cannot be found.', 'tumblr-importer' );
@@ -364,10 +412,52 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 				return;
 			}
 
+			if ( ! empty( $this->blog[ $url ]['progress'] ) ) {
+				if ( 'finish' !== $this->blog[ $url ]['progress'] ) {
+					$this->error = __( 'This blog is currently being imported.', 'tumblr-importer' );
+					return;
+				}
+
+				// Allows customers to start over their blog import
+
+				do_action( 'tumblr_importer_reimport_blog', $url );
+
+				delete_option( get_class( $this ) );
+
+				$found_blog = false;
+				$blog_data  = [];
+
+				foreach ( $this->blogs as $blog_data ) {
+					if ( $blog_data['url'] === $url ) {
+						$found_blog = true;
+						break;
+					}
+				}
+
+				if ( ! $found_blog || empty( $blog_data ) ) {
+					$this->error = __( 'An error occurred while reimporting the blog.', 'tumblr-importer' );
+					return;
+				}
+
+				$this->blog[ $url ]['posts_complete']  = 0;
+				$this->blog[ $url ]['drafts_complete'] = 0;
+				$this->blog[ $url ]['queued_complete'] = 0;
+				$this->blog[ $url ]['pages_complete']  = 0;
+				$this->blog[ $url ]['total_posts']     = $blog_data['posts'];
+				$this->blog[ $url ]['total_drafts']    = $blog_data['drafts'];
+				$this->blog[ $url ]['total_queued']    = $blog_data['queued'];
+				$this->blog[ $url ]['name']            = $blog_data['name'];
+			}
+
 			$this->blog[ $url ]['progress']    = 'start';
-			$this->blog[ $url ]['post_author'] = (int) $_POST['post_author'];
+
+			if ( isset( $_POST['post_author'] ) ) {
+				$this->blog[ $url ]['post_author'] = (int) $_POST['post_author'];
+			}
 
 			$this->schedule_import_job( 'do_blog_import', array( $url ) );
+
+			do_action( 'import_start', 'Tumblr' );
 		}
 
 		/**
@@ -378,7 +468,8 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 		public function restart() {
 			check_admin_referer( 'tumblr-import' );
 			delete_option( get_class( $this ) );
-			wp_redirect( '?import=tumblr' );
+			wp_safe_redirect( '?import=tumblr' );
+			exit;
 		}
 
 		/**
@@ -394,19 +485,36 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 			}
 
 			// default to the done state
-			$done = true;
-
+			$done        = true;
 			$this->error = null;
+
+			$_progress_before = null;
+			$_progress_after  = null;
+			$_max_progress    = null;
+
+			do_action( 'tumblr_importer_import_blog_before', $url );
+
 			if ( ! empty( $this->blog[ $url ]['progress'] ) ) {
-				$done = false;
+				$done        = false;
+				$retry_count = 0;
 				do {
 					switch ( $this->blog[ $url ]['progress'] ) {
 						case 'start':
 						case 'posts':
+							$_max_progress    = $this->blog[ $url ]['total_posts'];
+							$_progress_before = $this->blog[ $url ]['posts_complete'];
+							do_action( 'tumblr_importer_do_posts_import_before', $url );
 							$this->do_posts_import( $url );
+							do_action( 'tumblr_importer_do_posts_import_after', $url );
+							$_progress_after = $this->blog[ $url ]['posts_complete'];
 							break;
 						case 'drafts':
+							$_max_progress    = $this->blog[ $url ]['total_drafts'];
+							$_progress_before = $this->blog[ $url ]['drafts_complete'];
+							do_action( 'tumblr_importer_do_drafts_import_before', $url );
 							$this->do_drafts_import( $url );
+							do_action( 'tumblr_importer_do_drafts_import_after', $url );
+							$_progress_after = $this->blog[ $url ]['drafts_complete'];
 							break;
 						case 'queued':
 							// TODO Tumblr's API is broken for queued posts
@@ -424,8 +532,21 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 							break;
 					}
 					$this->save_vars();
+
+					if ( $_progress_before === $_progress_after ) {
+						if ( ( 0 < $_progress_after ) && ( $_progress_after < $_max_progress ) ) {
+							// We haven't progressed this time round so lets bump the retry_count.
+							++$retry_count;
+
+							do_action( 'tumblr_importer_do_blog_import_progress_stuck', $url, $retry_count, $_progress_before, $_progress_after, $_max_progress );
+						}
+					}
 				} while ( empty( $this->error ) && ! $done && $this->have_time() );
 			}
+
+			do_action( 'tumblr_importer_import_blog_after', $url );
+
+			do_action( 'import_end', 'Tumblr' );
 
 			return $done;
 		}
@@ -448,7 +569,8 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 			}
 
 			// get the already imported posts to prevent dupes
-			$dupes = $this->get_imported_posts( 'tumblr', $this->blog[ $url ]['name'] );
+			$this->dupes = $this->get_imported_posts( 'tumblr', $this->blog[ $url ]['name'] );
+			$this->dupes = apply_filters( 'tumblr_importer_duplicate_imports', $this->dupes );
 
 			if ( $this->blog[ $url ]['posts_complete'] + TUMBLR_MAX_IMPORT > $total ) {
 				$count = $total - $start;
@@ -456,7 +578,9 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 				$count = TUMBLR_MAX_IMPORT;
 			}
 
+			do_action( 'tumblr_importer_fetch_posts_before', $url );
 			$imported_posts = $this->fetch_posts( $url, $start, $count, $this->email, $this->password );
+			do_action( 'tumblr_importer_fetch_posts_after', $url );
 
 			if ( false === $imported_posts ) {
 				$this->error = __( 'Problem communicating with Tumblr, retrying later', 'tumblr-importer' );
@@ -468,7 +592,8 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 				$post = current( $imported_posts );
 				do {
 					// skip dupes
-					if ( ! empty( $dupes[ $post['tumblr_url'] ] ) ) {
+					if ( ! empty( $this->dupes[ $post['tumblr_url'] ] ) ) {
+						do_action( 'tumblr_importer_duplicate_post', $post );
 						++$this->blog[ $url ]['posts_complete'];
 						$this->save_vars();
 						continue;
@@ -482,8 +607,15 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 
 					$post['post_author'] = $this->blog[ $url ]['post_author'];
 
+					do_action( 'tumblr_importer_importing_post_before', $post );
+
 					do_action( 'tumblr_importing_post', $post );
-					$id = wp_insert_post( $post );
+
+					do_action( 'tumblr_importer_importing_post_after', $post );
+
+					do_action( 'tumblr_importer_insert_new_post_before', $post );
+					$id = wp_insert_post( $post, false, false );
+					do_action( 'tumblr_importer_insert_new_post_after', $post );
 
 					if ( ! is_wp_error( $id ) ) {
 						$post['ID'] = $id; // Allows for the media importing to wp_update_post()
@@ -495,16 +627,22 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 						add_post_meta( $id, 'tumblr_' . $this->blog[ $url ]['name'] . '_permalink', $post['tumblr_url'] );
 						add_post_meta( $id, 'tumblr_' . $this->blog[ $url ]['name'] . '_id', $post['tumblr_id'] );
 
+						do_action( 'tumblr_importer_handle_sideload_before', $post );
 						$import_result = $this->handle_sideload( $post );
+						do_action( 'tumblr_importer_handle_sideload_after', $post );
+
+						$this->dupes[ $post['tumblr_url'] ] = $id;
 
 						// Handle failed imports.. If empty content and failed to import media..
 						if ( is_wp_error( $import_result ) ) {
 							if ( empty( $post['post_content'] ) ) {
+								do_action( 'tumblr_importer_failed_delete_post', $post );
 								wp_delete_post( $id, true );
 							}
 						}
 					}
 
+					do_action( 'tumblr_importer_posts_complete', $post );
 					++$this->blog[ $url ]['posts_complete'];
 					$this->save_vars();
 
@@ -541,7 +679,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 			}
 
 			// get the already imported posts to prevent dupes
-			$dupes = $this->get_imported_posts( 'tumblr', $this->blog[ $url ]['name'] );
+			$this->dupes = $this->get_imported_posts( 'tumblr', $this->blog[ $url ]['name'] );
 
 			if ( $this->blog[ $url ]['posts_complete'] + TUMBLR_MAX_IMPORT > $total ) {
 				$count = $total - $start;
@@ -562,7 +700,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 				$post = current( $imported_posts );
 				do {
 					// skip dupes
-					if ( ! empty( $dupes[ $post['tumblr_url'] ] ) ) {
+					if ( ! empty( $this->dupes[ $post['tumblr_url'] ] ) ) {
 						++$this->blog[ $url ]['drafts_complete'];
 						$this->save_vars();
 						continue;
@@ -602,7 +740,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 			$start = $this->blog[ $url ]['pages_complete'];
 
 			// get the already imported posts to prevent dupes
-			$dupes = $this->get_imported_posts( 'tumblr', $this->blog[ $url ]['name'] );
+			$this->dupes = $this->get_imported_posts( 'tumblr', $this->blog[ $url ]['name'] );
 
 			$imported_pages = $this->fetch_pages( $url, $this->email, $this->password );
 
@@ -616,7 +754,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 				$post = current( $imported_pages );
 				do {
 					// skip dupes
-					if ( ! empty( $dupes[ $post['tumblr_url'] ] ) ) {
+					if ( ! empty( $this->dupes[ $post['tumblr_url'] ] ) ) {
 						continue;
 					}
 
@@ -639,16 +777,61 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 		}
 
 		/**
-		 * Handles the sideload import.
+		 * Handles importing any Media within the imported Post
 		 *
-		 * @param array  $post The post.
-		 * @param string $source The source.
+		 * @param  array $post the (already) imported WP_Post
+		 *
+		 * @return void
+		 */
+		public function handle_sideload( $post ) {
+			if ( empty( $post['format'] ) ) {
+				return; // Nothing to import
+			}
+
+			$sideload_method = 'handle_sideload_' . $post['format'] . '_post';
+
+			if ( ! method_exists( $this, $sideload_method ) ) {
+				return;
+			}
+
+			$this->{$sideload_method}( $post );
+		}
+
+		/**
+		 * Handles updating the sideloaded post
+		 * Called if the handler function successfully completes
+		 * and is able to retrieve a valid $post
+		 *
+		 * @param  array $post The WP_Post to update
+		 *
+		 * @return void
+		 */
+		public function handle_sideload_post_update( $post ) {
+			do_action( 'tumblr_importer_format_post_before', $post );
+			$post = apply_filters( 'tumblr_importer_format_post', $post );
+			do_action( 'tumblr_importer_format_post_after', $post );
+
+			do_action( 'tumblr_importer_metadata_before', $post );
+			do_action( 'tumblr_importer_metadata', $post );
+			do_action( 'tumblr_importer_metadata_after', $post );
+
+			do_action( 'tumblr_importer_sideload_wp_update_post_before', $post );
+			wp_update_post( $post, false, false );
+			do_action( 'tumblr_importer_sideload_wp_update_post_after', $post );
+		}
+
+		/**
+		 * Handles sideloading for all post types.
+		 *
+		 * @param array $post The post data.
+		 * @param string $source The source URL.
 		 * @param string $description The description.
 		 * @param string $filename The filename.
 		 *
 		 * @return int|WP_Error
 		 */
 		public function handle_sideload_import( $post, $source, $description = '', $filename = false ) {
+			$file_array = [];
 			// Make a HEAD request to get the filename:
 			if ( empty( $filename ) ) {
 				$head = wp_remote_request( $source, array( 'method' => 'HEAD' ) );
@@ -663,137 +846,153 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 				$path     = parse_url( $source, PHP_URL_PATH );
 				$filename = basename( $path );
 			}
+
 			// Download file to temp location
+			do_action( 'tumblr_importer_download_url_before', $source );
 			$tmp = download_url( $source );
+			do_action( 'tumblr_importer_download_url_after', $source );
+
 			if ( is_wp_error( $tmp ) ) {
+				do_action( 'tumblr_importer_failed_download_url', $source );
 				return $tmp;
 			}
 
-			$file_array['name']     = ! empty( $filename ) ? $filename : basename( $tmp );
+			$file_array['name'] = ! empty( $filename ) ? $filename : basename( $tmp );
 			$file_array['tmp_name'] = $tmp;
 			// do the validation and storage stuff
-			$id = media_handle_sideload( $file_array, $post['ID'], $description, array( 'post_excerpt' => $description ) );
 
-			if ( $id && ! is_wp_error( $id ) ) {
-				// Update the date/time on the attachment to that of the Tumblr post.
-				$attachment = get_post( $id, ARRAY_A );
-				foreach ( array( 'post_date', 'post_date_gmt', 'post_modified', 'post_modified_gmt' ) as $field ) {
+			// Post fields to map to attachment fields
+			$fields_to_map = array( 'post_date', 'post_date_gmt', 'post_modified', 'post_modified_gmt' );
+
+			$attachment_post_defaults = array(
+				'post_excerpt' => $description,
+			);
+
+			// Map post fields to attachment post data arg to be provided to media_handle_sideload
+			$attachment_post_data = array_reduce(
+				$fields_to_map,
+				function ( $acc, $field ) use ( $post ) {
+					$post = (array) $post;
+
 					if ( isset( $post[ $field ] ) ) {
-						$attachment[ $field ] = $post[ $field ];
+						$acc[ $field ] = $post[ $field ];
 					}
-				}
-				wp_update_post( $attachment );
-			}
+					return $acc;
+				},
+				$attachment_post_defaults
+			);
+
+			do_action( 'tumblr_importer_media_handle_sideload_before', $file_array, $post, $description, $attachment_post_data );
+
+			// Import Media and merge parent post attributes onto the attachment
+			$id = media_handle_sideload( $file_array, $post['ID'], $description, $attachment_post_data );
+
+			do_action( 'tumblr_importer_media_handle_sideload_after', $file_array, $post, $description, $attachment_post_data );
 
 			// If error storing permanently, unlink
 			if ( is_wp_error( $id ) ) {
+				do_action( 'tumblr_importer_failed_insert_media', $file_array, $post, $description, $attachment_post_data );
 				@unlink( $file_array['tmp_name'] );
 			}
 			return $id;
 		}
 
 		/**
-		 * Handles the sideload.
+		 * Handles sideloading for gallery posts.
 		 *
-		 * @param array $post The post.
-		 *
-		 * @return void
+		 * @param array $post The post data.
+		 * @return void|WP_Error
 		 */
-		public function handle_sideload( $post ) {
+		private function handle_sideload_gallery_post( $post ) {
+			if ( ! empty( $post['gallery'] ) ) {
+				foreach ( $post['gallery'] as $photo ) {
+					$id = $this->handle_sideload_import( $post, (string) $photo['src'], (string) $photo['caption'] );
+					if ( is_wp_error( $id ) ) {
+						return $id;
+					}
+				}
+				$post['post_content'] = "[gallery]\n" . $post['post_content'];
 
-			if ( empty( $post['format'] ) ) {
-				return; // Nothing to import.
+				$this->handle_sideload_post_update( $post );
 			}
-
-			switch ( $post['format'] ) {
-				case 'gallery':
-					if ( ! empty( $post['gallery'] ) ) {
-						foreach ( $post['gallery'] as $i => $photo ) {
-							$id = $this->handle_sideload_import( $post, (string) $photo['src'], (string) $photo['caption'] );
-							if ( is_wp_error( $id ) ) {
-								return $id;
-							}
-						}
-						$post['post_content'] = "[gallery]\n" . $post['post_content'];
-						$post                 = apply_filters( 'tumblr_importer_format_post', $post );
-						do_action( 'tumblr_importer_metadata', $post );
-						wp_update_post( $post );
-						break; // If we processed a gallery, break, otherwise let it fall through to the Image handler
-					}
-					// fall through
-
-				case 'image':
-					if ( isset( $post['media']['src'] ) ) {
-						$id = $this->handle_sideload_import( $post, (string) $post['media']['src'], (string) $post['post_title'] );
-						if ( is_wp_error( $id ) ) {
-							return $id;
-						}
-
-						$link = ! empty( $post['media']['link'] ) ? $post['media']['link'] : null;
-						// image_send_to_editor has a filter to wrap in a shortcode.
-						$post_content                = $post['post_content'];
-						$post['post_content']        = get_image_send_to_editor( $id, (string) $post['post_title'], (string) $post['post_title'], 'none', $link, true, 'full' );
-						$post['post_content']       .= $post_content;
-						$post['meta']['attribution'] = $link;
-						$post                        = apply_filters( 'tumblr_importer_format_post', $post );
-						do_action( 'tumblr_importer_metadata', $post );
-						// $post['post_content'] .= "\n" . $post['post_content']; // the [caption] shortcode doesn't allow HTML, but this might have some extra markup
-						wp_update_post( $post );
-					}
-					break;
-
-				case 'audio':
-					// Handle Tumblr Hosted Audio
-					if ( isset( $post['media']['audio'] ) ) {
-						$id = $this->handle_sideload_import( $post, (string) $post['media']['audio'], $post['post_title'], (string) $post['media']['filename'] );
-						if ( is_wp_error( $id ) ) {
-							return $id;
-						}
-						$post['post_content'] = wp_get_attachment_link( $id ) . "\n" . $post['post_content'];
-					} else {
-						// Try to work out a "source" link to display Tumblr-style.
-						preg_match( '/(http[^ "<>\']+)/', $post['post_content'], $matches );
-						if ( isset( $matches[1] ) ) {
-							$url_parts                   = parse_url( $matches[1] );
-							$post['meta']['attribution'] = $url_parts['scheme'] . '://' . $url_parts['host'] . '/';
-						}
-					}
-					$post = apply_filters( 'tumblr_importer_format_post', $post );
-					do_action( 'tumblr_importer_metadata', $post );
-					wp_update_post( $post );
-					break;
-
-				case 'video':
-					// Handle Tumblr hosted video
-					if ( isset( $post['media']['video'] ) ) {
-						$id = $this->handle_sideload_import( $post, (string) $post['media']['video'], $post['post_title'], (string) $post['media']['filename'] );
-						if ( is_wp_error( $id ) ) {
-							return $id;
-						}
-
-						// @TODO: Check/change this to embed the imported video.
-						$link                        = wp_get_attachment_link( $id ) . "\n" . $post['post_content'];
-						$post['post_content']        = $link;
-						$post['meta']['attribution'] = $link;
-					} else {
-						// Try to work out a "source" link to mimic Tumblr's post formatting.
-						preg_match( '/(http[^ "<>\']+)/', $post['post_content'], $matches );
-						if ( isset( $matches[1] ) ) {
-							$url_parts                   = parse_url( $matches[1] );
-							$post['meta']['attribution'] = $url_parts['scheme'] . '://' . $url_parts['host'] . '/';
-						}
-					}
-					$post = apply_filters( 'tumblr_importer_format_post', $post );
-					do_action( 'tumblr_importer_metadata', $post );
-					wp_update_post( $post );
-
-					// Else, Check to see if the url embedded is handled by oEmbed (or not)
-					break;
-			}
-
-			return true; // all processed
 		}
 
+		/**
+		 * Handles sideloading for image posts.
+		 *
+		 * @param array $post The post data.
+		 *
+		 * @return void|WP_Error
+		 */
+		private function handle_sideload_image_post( $post ) {
+			if ( isset( $post['media']['src'] ) ) {
+				$id = $this->handle_sideload_import( $post, (string) $post['media']['src'], (string) $post['post_title'] );
+				if ( is_wp_error( $id ) ) {
+					return $id;
+				}
+
+				$link = ! empty( $post['media']['link'] ) ? $post['media']['link'] : null;
+				$post_content = $post['post_content'];
+				$post['post_content'] = get_image_send_to_editor( $id, (string) $post['post_title'], (string) $post['post_title'], 'none', $link, true, 'full' );
+				$post['post_content'] .= $post_content;
+				$post['meta']['attribution'] = $link;
+
+				$this->handle_sideload_post_update( $post );
+			}
+		}
+
+		/**
+		 * Handles sideloading for audio posts.
+		 *
+		 * @param array $post The post data.
+		 *
+		 * @return void|WP_Error
+		 */
+		private function handle_sideload_audio_post( $post ) {
+			if ( isset( $post['media']['audio'] ) ) {
+				$id = $this->handle_sideload_import( $post, (string) $post['media']['audio'], $post['post_title'], (string) $post['media']['filename'] );
+				if ( is_wp_error( $id ) ) {
+					return $id;
+				}
+				$post['post_content'] = wp_get_attachment_link( $id ) . "\n" . $post['post_content'];
+			} else {
+				preg_match( '/(http[^ "<>\']+)/', $post['post_content'], $matches );
+				if ( isset( $matches[1] ) ) {
+					$url_parts                   = parse_url( $matches[1] );
+					$post['meta']['attribution'] = $url_parts['scheme'] . '://' . $url_parts['host'] . '/';
+				}
+			}
+
+			$this->handle_sideload_post_update( $post );
+		}
+
+		/**
+		 * Handles sideloading for video posts.
+		 *
+		 * @param array $post The post data.
+		 *
+		 * @return void|WP_Error
+		 */
+		private function handle_sideload_video_post( $post ) {
+			if ( isset( $post['media']['video'] ) ) {
+				$id = $this->handle_sideload_import( $post, (string) $post['media']['video'], $post['post_title'], (string) $post['media']['filename'] );
+				if ( is_wp_error( $id ) ) {
+					return $id;
+				}
+
+				$link = wp_get_attachment_link( $id ) . "\n" . $post['post_content'];
+				$post['post_content'] = $link;
+				$post['meta']['attribution'] = $link;
+			} else {
+				preg_match( '/(http[^ "<>\']+)/', $post['post_content'], $matches );
+				if ( isset( $matches[1] ) ) {
+					$url_parts                   = parse_url( $matches[1] );
+					$post['meta']['attribution'] = $url_parts['scheme'] . '://' . $url_parts['host'] . '/';
+				}
+			}
+
+			$this->handle_sideload_post_update( $post );
+		}
 
 		/**
 		 * Get a request token from the OAuth endpoint (also serves as a test)
@@ -1013,6 +1212,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 						$post['post_content'] = '';
 
 						$video = array_shift( $tpost->player );
+						$embed = array();
 
 						if ( false !== strpos( (string) $video->embed_code, 'embed' ) ) {
 							if ( preg_match_all( '/<embed (.+?)>/', (string) $video->embed_code, $matches ) ) {
@@ -1096,6 +1296,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 			$tpages = $xml->pages;
 			$pages  = array();
 			foreach ( $tpages->page as $tpage ) {
+				$page = array();
 				if ( ! empty( $tpage['title'] ) ) {
 					$page['post_title'] = (string) $tpage['title'];
 				} elseif ( ! empty( $tpage['link-title'] ) ) {
@@ -1177,6 +1378,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 		 */
 		public function oauth_signature( $secret, $method, $url, $params = array() ) {
 			uksort( $params, 'strcmp' );
+			$pairs = array();
 			foreach ( $params as $k => $v ) {
 				$pairs[] = $this->urlencode_rfc3986( $k ) . '=' . $this->urlencode_rfc3986( $v );
 			}
