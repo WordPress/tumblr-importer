@@ -91,7 +91,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 				$this->start_blog_import();
 			}
 			if ( isset( $this->blogs ) ) {
-				$this->show_blogs( $this->error );
+				echo $this->show_blogs( $this->error );
 			} else {
 				echo $this->greet( $this->error );
 			}
@@ -279,130 +279,122 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 		 * @return void
 		 */
 		public function show_blogs( $error = null ) {
-
+			$output = '';
+		
 			if ( ! empty( $error ) ) {
-				echo "<div class='error'><p>" . esc_html( $error ) . '</p></div>';
+				$output .= "<div class='error'><p>" . esc_html( $error ) . '</p></div>';
 			}
-
+		
 			$authors = get_users( version_compare( get_bloginfo( 'version' ), '5.9.0', '<' ) ? array( 'who' => 'authors' ) : array( 'capability' => 'edit_posts' ) );
-			?>
-		<div class='wrap'>
-			<?php
+		
+			$output .= "<div class='wrap'>";
+		
 			if ( version_compare( get_bloginfo( 'version' ), '3.8.0', '<' ) ) {
-                // phpcs:ignore WordPress.WP.DeprecatedFunctions
-				screen_icon(); // Behind a version check.
+				// phpcs:ignore WordPress.WP.DeprecatedFunctions
+				$output .= screen_icon(); // Behind a version check.
 			}
-			?>
-		<h2><?php esc_html_e( 'Import Tumblr', 'tumblr-importer' ); ?></h2>
-
-			<?php do_action( 'tumblr_importer_import_instructions' ); ?>
-
-			<?php if ( 1 < count( $authors ) ) : ?>
-			<p><?php esc_html_e( 'As Tumblr does not expose the "author", even from multi-author blogs you will need to select which WordPress user will be listed as the author of the imported posts.', 'tumblr-importer' ); ?></p>
-		<?php endif; ?>
-		<table class="widefat" cellspacing="0"><thead>
-		<tr>
-		<th><?php esc_html_e( 'Tumblr Blog', 'tumblr-importer' ); ?></th>
-		<th><?php esc_html_e( 'URL', 'tumblr-importer' ); ?></th>
-		<th><?php esc_html_e( 'Posts Imported', 'tumblr-importer' ); ?></th>
-		<th><?php esc_html_e( 'Drafts Imported', 'tumblr-importer' ); ?></th>
-		<!--<th><?php esc_html_e( 'Queued Imported', 'tumblr-importer' ); ?></th>-->
-		<th><?php esc_html_e( 'Pages Imported', 'tumblr-importer' ); ?></th>
-		<th><?php esc_html_e( 'Author', 'tumblr-importer' ); ?></th>
-		<th><?php esc_html_e( 'Action/Status', 'tumblr-importer' ); ?></th>
-		</tr></thead>
-		<tbody>
-			<?php
-			$style          = '';
+		
+			$output .= "<h2>" . esc_html__( 'Import Tumblr', 'tumblr-importer' ) . "</h2>";
+			$output .= do_action( 'tumblr_importer_import_instructions' );
+		
+			if ( 1 < count( $authors ) ) {
+				$output .= "<p>" . esc_html__( 'As Tumblr does not expose the "author", even from multi-author blogs you will need to select which WordPress user will be listed as the author of the imported posts.', 'tumblr-importer' ) . "</p>";
+			}
+		
+			$output .= "<table class='widefat' cellspacing='0'><thead><tr>";
+			$output .= "<th>" . esc_html__( 'Tumblr Blog', 'tumblr-importer' ) . "</th>";
+			$output .= "<th>" . esc_html__( 'URL', 'tumblr-importer' ) . "</th>";
+			$output .= "<th>" . esc_html__( 'Posts Imported', 'tumblr-importer' ) . "</th>";
+			$output .= "<th>" . esc_html__( 'Drafts Imported', 'tumblr-importer' ) . "</th>";
+			$output .= "<th>" . esc_html__( 'Pages Imported', 'tumblr-importer' ) . "</th>";
+			$output .= "<th>" . esc_html__( 'Author', 'tumblr-importer' ) . "</th>";
+			$output .= "<th>" . esc_html__( 'Action/Status', 'tumblr-importer' ) . "</th>";
+			$output .= "</tr></thead><tbody>";
+		
+			$style = '';
 			$custom_domains = false;
+		
 			foreach ( $this->blogs as $blog ) {
-				$url   = $blog['url'];
+				$url = $blog['url'];
 				$style = ( 'alternate' == $style ) ? '' : 'alternate';
+		
 				if ( ! isset( $this->blog[ $url ] ) ) {
-					$this->blog[ $url ]['posts_complete']  = 0;
-					$this->blog[ $url ]['drafts_complete'] = 0;
-					$this->blog[ $url ]['queued_complete'] = 0;
-					$this->blog[ $url ]['pages_complete']  = 0;
-					$this->blog[ $url ]['total_posts']     = $blog['posts'];
-					$this->blog[ $url ]['total_drafts']    = $blog['drafts'];
-					$this->blog[ $url ]['total_queued']    = $blog['queued'];
-					$this->blog[ $url ]['name']            = $blog['name'];
+					$this->blog[ $url ] = [
+						'posts_complete'  => 0,
+						'drafts_complete' => 0,
+						'queued_complete' => 0,
+						'pages_complete'  => 0,
+						'total_posts'     => $blog['posts'],
+						'total_drafts'    => $blog['drafts'],
+						'total_queued'    => $blog['queued'],
+						'name'            => $blog['name'],
+					];
 				}
-
+		
 				if ( empty( $this->blog[ $url ]['progress'] ) ) {
 					$submit = "<input type='submit' value='" . esc_attr__( 'Import this blog', 'tumblr-importer' ) . "' />";
 				} elseif ( 'finish' === $this->blog[ $url ]['progress'] ) {
 					$submit = '<img src="' . esc_url( admin_url( 'images/yes.png' ) ) . '" style="vertical-align: top; padding: 0 4px;" alt="' . esc_attr__( 'Finished!', 'tumblr-importer' ) . '" title="' . esc_attr__( 'Finished!', 'tumblr-importer' ) . '" /><span>' . esc_html__( 'Finished!', 'tumblr-importer' ) . '</span>';
 				} else {
 					$submit = '<img src="' . admin_url( 'images/loading.gif' ) . '" style="vertical-align: top; padding: 0 4px;" alt="' . __( 'In Progress', 'tumblr-importer' ) . '" title="' . __( 'In Progress', 'tumblr-importer' ) . '" /><span>' . __( 'In Progress', 'tumblr-importer' ) . '</span>';
-					// Just a little js page reload to show progress if we're in the in-progress phase of the import.
 					$submit .= "<script type='text/javascript'>setTimeout( 'window.location.href = window.location.href', 15000);</script>";
 				}
-
-				// Check to see if this url is a custom domain. The API doesn't play nicely with these
-				// (intermittently returns 408 status), so make the user disable the custom domain
-				// before importing.
+		
 				if ( ! preg_match( '|tumblr.com/|', $url ) ) {
-					$submit         = '<nobr><img src="' . admin_url( 'images/no.png' ) . '" style="vertical-align:top; padding: 0 4px;" alt="' . __( 'Tumblr Blogs with Custom Domains activated cannot be imported, please disable the custom domain first.', 'tumblr-importer' ) . '" title="' . __( 'Tumblr Blogs with Custom Domains activated cannot be imported, please disable the custom domain first.', 'tumblr-importer' ) . '" /><span style="cursor: pointer;" title="' . __( 'Tumblr Blogs with Custom Domains activated cannot be imported, please disable the custom domain first.', 'tumblr-importer' ) . '">' . __( 'Custom Domain', 'tumblr-importer' ) . '</nobr></span>';
+					$submit = '<nobr><img src="' . admin_url( 'images/no.png' ) . '" style="vertical-align:top; padding: 0 4px;" alt="' . __( 'Tumblr Blogs with Custom Domains activated cannot be imported, please disable the custom domain first.', 'tumblr-importer' ) . '" title="' . __( 'Tumblr Blogs with Custom Domains activated cannot be imported, please disable the custom domain first.', 'tumblr-importer' ) . '" /><span style="cursor: pointer;" title="' . __( 'Tumblr Blogs with Custom Domains activated cannot be imported, please disable the custom domain first.', 'tumblr-importer' ) . '">' . __( 'Custom Domain', 'tumblr-importer' ) . '</span></nobr>';
 					$custom_domains = true;
 				}
-
-				// Build an author selector / static name depending on number
+		
 				if ( 1 == count( $authors ) ) {
 					$author_selection = "<input type='hidden' value='" . esc_attr( $authors[0]->ID ) . "' name='post_author' />" . esc_html( $authors[0]->display_name );
 				} else {
-					$args = array(
+					$args = [
 						'who'  => 'authors',
 						'name' => 'post_author',
 						'echo' => false,
-					);
+					];
 					if ( isset( $this->blog[ $url ]['post_author'] ) ) {
 						$args['selected'] = $this->blog[ $url ]['post_author'];
 					}
 					$author_selection = wp_dropdown_users( $args );
 				}
-				?>
-			<tr class="<?php echo esc_attr( $style ); ?>">
-			<form action='?import=tumblr' method='post'>
-				<?php wp_nonce_field( 'tumblr-import' ); ?>
-			<input type='hidden' name='blogurl' value='<?php echo esc_attr( $blog['url'] ); ?>' />
-
-				<td><?php echo esc_html( $blog['title'] ); ?></td>
-				<td><?php echo esc_html( $blog['url'] ); ?></td>
-				<td><?php echo esc_html( $this->blog[ $url ]['posts_complete'] . ' / ' . esc_html( $this->blog[ $url ]['total_posts'] ) ); ?></td>
-				<td><?php echo esc_html( $this->blog[ $url ]['drafts_complete'] . ' / ' . esc_html( $this->blog[ $url ]['total_drafts'] ) ); ?></td>
-				<!--<td><?php echo esc_html( $this->blog[ $url ]['queued_complete'] ); ?></td>-->
-				<td><?php echo esc_html( $this->blog[ $url ]['pages_complete'] ); ?></td>
-				<?php // The below are generated above and escaped where needed. ?>
-				<td><?php echo $author_selection; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></td>
-				<td><?php echo $submit; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></td>
-			</form>
-			</tr>
-				<?php
+		
+				$output .= "<tr class='" . esc_attr( $style ) . "'><form action='?import=tumblr' method='post'>";
+				$output .= wp_nonce_field( 'tumblr-import', '_wpnonce', true, false );
+				$output .= "<input type='hidden' name='blogurl' value='" . esc_attr( $blog['url'] ) . "' />";
+				$output .= "<td>" . esc_html( $blog['title'] ) . "</td>";
+				$output .= "<td>" . esc_html( $blog['url'] ) . "</td>";
+				$output .= "<td>" . esc_html( $this->blog[ $url ]['posts_complete'] . ' / ' . $this->blog[ $url ]['total_posts'] ) . "</td>";
+				$output .= "<td>" . esc_html( $this->blog[ $url ]['drafts_complete'] . ' / ' . $this->blog[ $url ]['total_drafts'] ) . "</td>";
+				$output .= "<td>" . esc_html( $this->blog[ $url ]['pages_complete'] ) . "</td>";
+				$output .= "<td>" . $author_selection . "</td>";
+				$output .= "<td>" . $submit . "</td>";
+				$output .= "</form></tr>";
 			}
-			?>
-		</tbody>
-		</table>
-			<?php if ( $custom_domains ) : ?>
-		<p><strong>
-				<?php esc_html_e( 'As one or more of your Tumblr blogs has a Custom Domain mapped to it. If you would like to import one of these sites you will need to temporarily remove the custom domain mapping and clear the account information from the importer to import. Once the import is completed you can re-enable the custom domain for your site.', 'tumblr-importer' ); ?>
-		</strong></p>
-		<?php endif; ?>
-		<p><?php esc_html_e( "Importing your Tumblr blog can take a while so the importing process happens in the background and you may not see immediate results here. Come back to this page later to check on the importer's progress.", 'tumblr-importer' ); ?></p>
-		</div>
-			<?php
+		
+			$output .= "</tbody></table>";
+		
+			if ( $custom_domains ) {
+				$output .= "<p><strong>" . esc_html__( 'As one or more of your Tumblr blogs has a Custom Domain mapped to it. If you would like to import one of these sites you will need to temporarily remove the custom domain mapping and clear the account information from the importer to import. Once the import is completed you can re-enable the custom domain for your site.', 'tumblr-importer' ) . "</strong></p>";
+			}
+		
+			$output .= "<p>" . esc_html__( "Importing your Tumblr blog can take a while so the importing process happens in the background and you may not see immediate results here. Come back to this page later to check on the importer's progress.", 'tumblr-importer' ) . "</p>";
+			$output .= "</div>";
+		
+			return $output;
 		}
-
+		
+	
 		/**
 		 * Displays the instructions.
 		 *
 		 * @return void
 		 */
 		public function instructions() {
-			?>
-			<p><?php esc_html_e( 'Please select the Tumblr blog you would like to import into your WordPress site and then click on the "Import this Blog" button to continue.', 'tumblr-importer' ); ?></p>
-			<p><?php esc_html_e( 'If your import gets stuck for a long time or you would like to import from a different Tumblr account instead then click on the "Clear account information" button below to reset the importer.', 'tumblr-importer' ); ?></p>
-			<?php
+			$output = '';
+			$output .= "<p>" . esc_html__( 'Please select the Tumblr blog you would like to import into your WordPress site and then click on the "Import this Blog" button to continue.', 'tumblr-importer' ) . "</p>";
+			$output .= "<p>" . esc_html__( 'If your import gets stuck for a long time or you would like to import from a different Tumblr account instead then click on the "Clear account information" button below to reset the importer.', 'tumblr-importer' ) . "</p>";
+			return $output;
 		}
 
 		/**
