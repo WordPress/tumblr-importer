@@ -93,7 +93,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 			if ( isset( $this->blogs ) ) {
 				$this->show_blogs( $this->error );
 			} else {
-				$this->greet( $this->error );
+				echo $this->greet( $this->error );
 			}
 
 			unset( $this->error );
@@ -105,7 +105,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 			}
 
 			if ( $saved && ! isset( $_GET['noheader'] ) ) {
-				$this->saved_info_display();
+				echo $this->saved_info_display();
 			}
 		}
 
@@ -115,16 +115,22 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 		 * @return void
 		 */
 		public function saved_info_display() {
-			?>
-			<p><?php esc_html_e( 'We have saved some information about your Tumblr account in your WordPress database. Clearing this information will allow you to start over. Restarting will not affect any posts you have already imported. If you attempt to re-import a blog, duplicate posts will be skipped.', 'tumblr-importer' ); ?></p>
-			<p><?php esc_html_e( 'Note: This will stop any import currently in progress.', 'tumblr-importer' ); ?></p>
-			<form method='post' action='?import=tumblr&amp;noheader=true'>
-				<?php wp_nonce_field( 'tumblr-import' ); ?>
-			<p class='submit' style='text-align:left;'>
-			<input type='submit' class='button' value='<?php esc_attr_e( 'Clear account information', 'tumblr-importer' ); ?>' name='restart' />
-			</p>
-			</form>
-			<?php
+			$output_html = '<p>';
+			$output_html .= esc_html__( 'We have saved some information about your Tumblr account in your WordPress database. Clearing this information will allow you to start over. Restarting will not affect any posts you have already imported. If you attempt to re-import a blog, duplicate posts will be skipped.', 'tumblr-importer' );
+			$output_html .= '</p>';
+			$output_html .= '<p>';
+			$output_html .= esc_html__( 'Note: This will stop any import currently in progress.', 'tumblr-importer' );
+			$output_html .= '</p>';
+
+			$output_html .= '<form method="post" action="?import=tumblr&amp;noheader=true">';
+			$output_html .= wp_nonce_field( 'tumblr-import' );
+			$output_html .= '<p class="submit" style="text-align:left;">';
+			$output_html .= '<input type="submit" class="button" value="';
+			$output_html .= esc_attr__( 'Clear account information', 'tumblr-importer' );
+			$output_html .= '" name="restart" />';
+			$output_html .= '</p>';
+			$output_html .= '</form>';
+			return $output_html;
 		}
 
 		/**
@@ -135,70 +141,62 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 		 * @return void
 		 */
 		public function greet( $error = null ) {
-			if ( ! empty( $error ) ) {
-				echo "<div class='error'><p>" . esc_html( $error ) . '</p></div>';
-			}
-			?>
+			$output = '';
 
-		<div class='wrap'>
-			<?php
+			if ( ! empty( $error ) ) {
+				return "<div class='error'><p>" . esc_html( $error ) . '</p></div>';
+			}
+		
+			$output .= "<div class='wrap'>";
+		
 			if ( version_compare( get_bloginfo( 'version' ), '3.8.0', '<' ) ) {
 				// phpcs:ignore WordPress.WP.DeprecatedFunctions
-				screen_icon(); // Behind a version check.
+				$output .= get_screen_icon(); // Behind a version check.
 			}
-			?>
-		<h2><?php esc_html_e( 'Import Tumblr', 'tumblr-importer' ); ?></h2>
-			<?php if ( empty( $this->request_tokens ) ) { ?>
-		<p><?php esc_html_e( 'Howdy! This importer allows you to import posts from your Tumblr account into your WordPress site.', 'tumblr-importer' ); ?></p>
-		<p><?php esc_html_e( "First, you will need to create an 'app' on Tumblr. The app provides a connection point between your blog and Tumblr's servers.", 'tumblr-importer' ); ?></p>
-
-		<p><?php esc_html_e( 'To create an app, visit this page:', 'tumblr-importer' ); ?> <a href="https://www.tumblr.com/oauth/apps">https://www.tumblr.com/oauth/apps</a></p>
-		<ol>
-		<li><?php esc_html_e( 'Click the large green "Register Application" button.', 'tumblr-importer' ); ?></li>
-		<li><?php esc_html_e( 'You need to fill in the "Application Name", "Application Website", and "Default Callback URL" fields. All the rest can be left blank.', 'tumblr-importer' ); ?></li>
-		<li>
-				<?php
-				esc_html_e( 'For the "Application Website" and "Default Callback URL" fields, please put in this URL: ', 'tumblr-importer' );
-				echo '<strong>' . esc_url( home_url() ) . '</strong>';
-				?>
-		</li>
-		<li><?php echo wp_kses( __( 'Note: It is important that you put in that URL <em>exactly as given</em>.', 'tumblr-importer' ), array( 'em' => array() ) ); ?></li>
-		</ol>
-
-		<p><?php esc_html_e( 'After creating the application, copy and paste the "OAuth Consumer Key" and "Secret Key" into the given fields below.', 'tumblr-importer' ); ?></p>
-
-		<form action='?import=tumblr' method='post'>
-				<?php wp_nonce_field( 'tumblr-import' ); ?>
-			<table class="form-table">
-				<tr>
-					<th scope="row"><label for='consumerkey'><?php esc_html_e( 'OAuth Consumer Key:', 'tumblr-importer' ); ?></label></th>
-					<td>
-						<input type='text' class="regular-text" name='consumerkey' value='<?php echo isset( $this->consumerkey ) ? esc_attr( $this->consumerkey ) : ''; ?>' />
-					</td>
-				</tr>
-				<tr>
-					<th scope="row"><label for='secretkey'><?php esc_html_e( 'Secret Key:', 'tumblr-importer' ); ?></label></th>
-					<td>
-						<input type='text' class="regular-text" name='secretkey' value='<?php echo isset( $this->secretkey ) ? esc_attr( $this->secretkey ) : ''; ?>' />
-					</td>
-				</tr>
-			</table>
-			<p class='submit'>
-				<input type='submit' class='button' value="<?php esc_attr_e( 'Connect to Tumblr', 'tumblr-importer' ); ?>" />
-			</p>
-		</form>
-		</div>
-				<?php
+		
+			$output .= "<h2>" . esc_html__( 'Import Tumblr', 'tumblr-importer' ) . "</h2>";
+		
+			if ( empty( $this->request_tokens ) ) {
+				$output .= "<p>" . esc_html__( 'Howdy! This importer allows you to import posts from your Tumblr account into your WordPress site.', 'tumblr-importer' ) . "</p>";
+				$output .= "<p>" . esc_html__( "First, you will need to create an 'app' on Tumblr. The app provides a connection point between your blog and Tumblr's servers.", 'tumblr-importer' ) . "</p>";
+				$output .= "<p>" . esc_html__( 'To create an app, visit this page:', 'tumblr-importer' ) . " <a href='https://www.tumblr.com/oauth/apps'>https://www.tumblr.com/oauth/apps</a></p>";
+		
+				$output .= "<ol>";
+				$output .= "<li>" . esc_html__( 'Click the large green "Register Application" button.', 'tumblr-importer' ) . "</li>";
+				$output .= "<li>" . esc_html__( 'You need to fill in the "Application Name", "Application Website", and "Default Callback URL" fields. All the rest can be left blank.', 'tumblr-importer' ) . "</li>";
+				$output .= "<li>" . esc_html__( 'For the "Application Website" and "Default Callback URL" fields, please put in this URL: ', 'tumblr-importer' );
+				$output .= '<strong>' . esc_url( home_url() ) . '</strong></li>';
+				$output .= "<li>" . wp_kses( __( 'Note: It is important that you put in that URL <em>exactly as given</em>.', 'tumblr-importer' ), array( 'em' => array() ) ) . "</li>";
+				$output .= "</ol>";
+		
+				$output .= "<p>" . esc_html__( 'After creating the application, copy and paste the "OAuth Consumer Key" and "Secret Key" into the given fields below.', 'tumblr-importer' ) . "</p>";
+		
+				$output .= "<form action='?import=tumblr' method='post'>";
+				$output .= wp_nonce_field( 'tumblr-import', '_wpnonce', true, false );
+				$output .= "<table class='form-table'>";
+		
+				$output .= "<tr><th scope='row'><label for='consumerkey'>" . esc_html__( 'OAuth Consumer Key:', 'tumblr-importer' ) . "</label></th>";
+				$output .= "<td><input type='text' class='regular-text' name='consumerkey' value='" . ( isset( $this->consumerkey ) ? esc_attr( $this->consumerkey ) : '' ) . "' /></td></tr>";
+		
+				$output .= "<tr><th scope='row'><label for='secretkey'>" . esc_html__( 'Secret Key:', 'tumblr-importer' ) . "</label></th>";
+				$output .= "<td><input type='text' class='regular-text' name='secretkey' value='" . ( isset( $this->secretkey ) ? esc_attr( $this->secretkey ) : '' ) . "' /></td></tr>";
+		
+				$output .= "</table>";
+				$output .= "<p class='submit'><input type='submit' class='button' value='" . esc_attr__( 'Connect to Tumblr', 'tumblr-importer' ) . "' /></p>";
+				$output .= "</form>";
+		
 			} else {
-				?>
-			<p><?php esc_html_e( 'Everything seems to be in order, so now you need to tell Tumblr to allow the plugin to access your account.', 'tumblr-importer' ); ?></p>
-			<p><?php esc_html_e( "To do this, click the Authorize link below. You will be redirected back to this page when you've granted the permission.", 'tumblr-importer' ); ?></p>
-
-			<p><a href="<?php echo esc_url_raw( $this->authorize_url ); ?>"><?php esc_html_e( 'Authorize the Application', 'tumblr-importer' ); ?></a></p>
-				<?php
+				$output .= "<p>" . esc_html__( 'Everything seems to be in order, so now you need to tell Tumblr to allow the plugin to access your account.', 'tumblr-importer' ) . "</p>";
+				$output .= "<p>" . esc_html__( "To do this, click the Authorize link below. You will be redirected back to this page when you've granted the permission.", 'tumblr-importer' ) . "</p>";
+				$output .= "<p><a href='" . esc_url_raw( $this->authorize_url ) . "'>" . esc_html__( 'Authorize the Application', 'tumblr-importer' ) . "</a></p>";
 			}
+		
+			$output .= "</div>";
+		
+			return $output;
 		}
-
+	
+		
 		/**
 		 * Checks the credentials.
 		 *
