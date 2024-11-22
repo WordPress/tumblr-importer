@@ -13,6 +13,20 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 	class Tumblr_Import extends WP_Importer_Cron {
 
 		/**
+		 * Consumer key for Tumblr API
+		 *
+		 * @var string
+		 */
+		public $consumerkey = '';
+
+		/**
+		 * Secret key for Tumblr API
+		 *
+		 * @var string
+		 */
+		public $secretkey = '';
+
+		/**
 		 * List of duplicate posts
 		 *
 		 * @var array
