@@ -115,7 +115,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 		 * @return void
 		 */
 		public function saved_info_display() {
-			$output_html = '<p>';
+			$output_html  = '<p>';
 			$output_html .= esc_html__( 'We have saved some information about your Tumblr account in your WordPress database. Clearing this information will allow you to start over. Restarting will not affect any posts you have already imported. If you attempt to re-import a blog, duplicate posts will be skipped.', 'tumblr-importer' );
 			$output_html .= '</p>';
 			$output_html .= '<p>';
@@ -154,44 +154,44 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 				$output .= get_screen_icon(); // Behind a version check.
 			}
 
-			$output .= "<h2>" . esc_html__( 'Import Tumblr', 'tumblr-importer' ) . "</h2>";
+			$output .= '<h2>' . esc_html__( 'Import Tumblr', 'tumblr-importer' ) . '</h2>';
 
 			if ( empty( $this->request_tokens ) ) {
-				$output .= "<p>" . esc_html__( 'Howdy! This importer allows you to import posts from your Tumblr account into your WordPress site.', 'tumblr-importer' ) . "</p>";
-				$output .= "<p>" . esc_html__( "First, you will need to create an 'app' on Tumblr. The app provides a connection point between your blog and Tumblr's servers.", 'tumblr-importer' ) . "</p>";
-				$output .= "<p>" . esc_html__( 'To create an app, visit this page:', 'tumblr-importer' ) . " <a href='https://www.tumblr.com/oauth/apps'>https://www.tumblr.com/oauth/apps</a></p>";
+				$output .= '<p>' . esc_html__( 'Howdy! This importer allows you to import posts from your Tumblr account into your WordPress site.', 'tumblr-importer' ) . '</p>';
+				$output .= '<p>' . esc_html__( "First, you will need to create an 'app' on Tumblr. The app provides a connection point between your blog and Tumblr's servers.", 'tumblr-importer' ) . '</p>';
+				$output .= '<p>' . esc_html__( 'To create an app, visit this page:', 'tumblr-importer' ) . " <a href='https://www.tumblr.com/oauth/apps'>https://www.tumblr.com/oauth/apps</a></p>";
 
-				$output .= "<ol>";
-				$output .= "<li>" . esc_html__( 'Click the large green "Register Application" button.', 'tumblr-importer' ) . "</li>";
-				$output .= "<li>" . esc_html__( 'You need to fill in the "Application Name", "Application Website", and "Default Callback URL" fields. All the rest can be left blank.', 'tumblr-importer' ) . "</li>";
-				$output .= "<li>" . esc_html__( 'For the "Application Website" and "Default Callback URL" fields, please put in this URL: ', 'tumblr-importer' );
+				$output .= '<ol>';
+				$output .= '<li>' . esc_html__( 'Click the large green "Register Application" button.', 'tumblr-importer' ) . '</li>';
+				$output .= '<li>' . esc_html__( 'You need to fill in the "Application Name", "Application Website", and "Default Callback URL" fields. All the rest can be left blank.', 'tumblr-importer' ) . '</li>';
+				$output .= '<li>' . esc_html__( 'For the "Application Website" and "Default Callback URL" fields, please put in this URL: ', 'tumblr-importer' );
 				$output .= '<strong>' . esc_url( home_url() ) . '</strong></li>';
-				$output .= "<li>" . wp_kses( __( 'Note: It is important that you put in that URL <em>exactly as given</em>.', 'tumblr-importer' ), array( 'em' => array() ) ) . "</li>";
-				$output .= "</ol>";
+				$output .= '<li>' . wp_kses( __( 'Note: It is important that you put in that URL <em>exactly as given</em>.', 'tumblr-importer' ), array( 'em' => array() ) ) . '</li>';
+				$output .= '</ol>';
 
-				$output .= "<p>" . esc_html__( 'After creating the application, copy and paste the "OAuth Consumer Key" and "Secret Key" into the given fields below.', 'tumblr-importer' ) . "</p>";
+				$output .= '<p>' . esc_html__( 'After creating the application, copy and paste the "OAuth Consumer Key" and "Secret Key" into the given fields below.', 'tumblr-importer' ) . '</p>';
 
 				$output .= "<form action='?import=tumblr' method='post'>";
 				$output .= wp_nonce_field( 'tumblr-import', '_wpnonce', true, false );
 				$output .= "<table class='form-table'>";
 
-				$output .= "<tr><th scope='row'><label for='consumerkey'>" . esc_html__( 'OAuth Consumer Key:', 'tumblr-importer' ) . "</label></th>";
+				$output .= "<tr><th scope='row'><label for='consumerkey'>" . esc_html__( 'OAuth Consumer Key:', 'tumblr-importer' ) . '</label></th>';
 				$output .= "<td><input type='text' class='regular-text' name='consumerkey' value='" . ( isset( $this->consumerkey ) ? esc_attr( $this->consumerkey ) : '' ) . "' /></td></tr>";
 
-				$output .= "<tr><th scope='row'><label for='secretkey'>" . esc_html__( 'Secret Key:', 'tumblr-importer' ) . "</label></th>";
+				$output .= "<tr><th scope='row'><label for='secretkey'>" . esc_html__( 'Secret Key:', 'tumblr-importer' ) . '</label></th>';
 				$output .= "<td><input type='text' class='regular-text' name='secretkey' value='" . ( isset( $this->secretkey ) ? esc_attr( $this->secretkey ) : '' ) . "' /></td></tr>";
 
-				$output .= "</table>";
+				$output .= '</table>';
 				$output .= "<p class='submit'><input type='submit' class='button' value='" . esc_attr__( 'Connect to Tumblr', 'tumblr-importer' ) . "' /></p>";
-				$output .= "</form>";
+				$output .= '</form>';
 
 			} else {
-				$output .= "<p>" . esc_html__( 'Everything seems to be in order, so now you need to tell Tumblr to allow the plugin to access your account.', 'tumblr-importer' ) . "</p>";
-				$output .= "<p>" . esc_html__( "To do this, click the Authorize link below. You will be redirected back to this page when you've granted the permission.", 'tumblr-importer' ) . "</p>";
-				$output .= "<p><a href='" . esc_url_raw( $this->authorize_url ) . "'>" . esc_html__( 'Authorize the Application', 'tumblr-importer' ) . "</a></p>";
+				$output .= '<p>' . esc_html__( 'Everything seems to be in order, so now you need to tell Tumblr to allow the plugin to access your account.', 'tumblr-importer' ) . '</p>';
+				$output .= '<p>' . esc_html__( "To do this, click the Authorize link below. You will be redirected back to this page when you've granted the permission.", 'tumblr-importer' ) . '</p>';
+				$output .= "<p><a href='" . esc_url_raw( $this->authorize_url ) . "'>" . esc_html__( 'Authorize the Application', 'tumblr-importer' ) . '</a></p>';
 			}
 
-			$output .= "</div>";
+			$output .= '</div>';
 
 			return $output;
 		}
@@ -294,33 +294,33 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 				$output .= screen_icon(); // Behind a version check.
 			}
 
-			$output .= "<h2>" . esc_html__( 'Import Tumblr', 'tumblr-importer' ) . "</h2>";
+			$output .= '<h2>' . esc_html__( 'Import Tumblr', 'tumblr-importer' ) . '</h2>';
 			$output .= do_action( 'tumblr_importer_import_instructions' );
 
 			if ( 1 < count( $authors ) ) {
-				$output .= "<p>" . esc_html__( 'As Tumblr does not expose the "author", even from multi-author blogs you will need to select which WordPress user will be listed as the author of the imported posts.', 'tumblr-importer' ) . "</p>";
+				$output .= '<p>' . esc_html__( 'As Tumblr does not expose the "author", even from multi-author blogs you will need to select which WordPress user will be listed as the author of the imported posts.', 'tumblr-importer' ) . '</p>';
 			}
 
 			$output .= "<table class='widefat' cellspacing='0'><thead><tr>";
-			$output .= "<th>" . esc_html__( 'Tumblr Blog', 'tumblr-importer' ) . "</th>";
-			$output .= "<th>" . esc_html__( 'URL', 'tumblr-importer' ) . "</th>";
-			$output .= "<th>" . esc_html__( 'Posts Imported', 'tumblr-importer' ) . "</th>";
-			$output .= "<th>" . esc_html__( 'Drafts Imported', 'tumblr-importer' ) . "</th>";
-            $output .= "<th>" . esc_html__( 'Queued Imported', 'tumblr-importer' ) . "</th>";
-			$output .= "<th>" . esc_html__( 'Pages Imported', 'tumblr-importer' ) . "</th>";
-			$output .= "<th>" . esc_html__( 'Author', 'tumblr-importer' ) . "</th>";
-			$output .= "<th>" . esc_html__( 'Action/Status', 'tumblr-importer' ) . "</th>";
-			$output .= "</tr></thead><tbody>";
+			$output .= '<th>' . esc_html__( 'Tumblr Blog', 'tumblr-importer' ) . '</th>';
+			$output .= '<th>' . esc_html__( 'URL', 'tumblr-importer' ) . '</th>';
+			$output .= '<th>' . esc_html__( 'Posts Imported', 'tumblr-importer' ) . '</th>';
+			$output .= '<th>' . esc_html__( 'Drafts Imported', 'tumblr-importer' ) . '</th>';
+			$output .= '<th>' . esc_html__( 'Queued Imported', 'tumblr-importer' ) . '</th>';
+			$output .= '<th>' . esc_html__( 'Pages Imported', 'tumblr-importer' ) . '</th>';
+			$output .= '<th>' . esc_html__( 'Author', 'tumblr-importer' ) . '</th>';
+			$output .= '<th>' . esc_html__( 'Action/Status', 'tumblr-importer' ) . '</th>';
+			$output .= '</tr></thead><tbody>';
 
-			$style = '';
+			$style          = '';
 			$custom_domains = false;
 
 			foreach ( $this->blogs as $blog ) {
-				$url = $blog['url'];
+				$url   = $blog['url'];
 				$style = ( 'alternate' == $style ) ? '' : 'alternate';
 
 				if ( ! isset( $this->blog[ $url ] ) ) {
-					$this->blog[ $url ] = [
+					$this->blog[ $url ] = array(
 						'posts_complete'  => 0,
 						'drafts_complete' => 0,
 						'queued_complete' => 0,
@@ -329,7 +329,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 						'total_drafts'    => $blog['drafts'],
 						'total_queued'    => $blog['queued'],
 						'name'            => $blog['name'],
-					];
+					);
 				}
 
 				if ( empty( $this->blog[ $url ]['progress'] ) ) {
@@ -337,23 +337,28 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 				} elseif ( 'finish' === $this->blog[ $url ]['progress'] ) {
 					$submit = '<img src="' . esc_url( admin_url( 'images/yes.png' ) ) . '" style="vertical-align: top; padding: 0 4px;" alt="' . esc_attr__( 'Finished!', 'tumblr-importer' ) . '" title="' . esc_attr__( 'Finished!', 'tumblr-importer' ) . '" /><span>' . esc_html__( 'Finished!', 'tumblr-importer' ) . '</span>';
 				} else {
-					$submit = '<img src="' . admin_url( 'images/loading.gif' ) . '" style="vertical-align: top; padding: 0 4px;" alt="' . __( 'In Progress', 'tumblr-importer' ) . '" title="' . __( 'In Progress', 'tumblr-importer' ) . '" /><span>' . __( 'In Progress', 'tumblr-importer' ) . '</span>';
+					$submit  = '<img src="' . admin_url( 'images/loading.gif' ) . '" style="vertical-align: top; padding: 0 4px;" alt="' . __( 'In Progress', 'tumblr-importer' ) . '" title="' . __( 'In Progress', 'tumblr-importer' ) . '" /><span>' . __( 'In Progress', 'tumblr-importer' ) . '</span>';
+                    // Just a little js page reload to show progress if we're in the in-progress phase of the import.
 					$submit .= "<script type='text/javascript'>setTimeout( 'window.location.href = window.location.href', 15000);</script>";
 				}
 
+                // Check to see if this url is a custom domain. The API doesn't play nicely with these
+                // (intermittently returns 408 status), so make the user disable the custom domain
+                // before importing.
 				if ( ! preg_match( '|tumblr.com/|', $url ) ) {
-					$submit = '<nobr><img src="' . admin_url( 'images/no.png' ) . '" style="vertical-align:top; padding: 0 4px;" alt="' . __( 'Tumblr Blogs with Custom Domains activated cannot be imported, please disable the custom domain first.', 'tumblr-importer' ) . '" title="' . __( 'Tumblr Blogs with Custom Domains activated cannot be imported, please disable the custom domain first.', 'tumblr-importer' ) . '" /><span style="cursor: pointer;" title="' . __( 'Tumblr Blogs with Custom Domains activated cannot be imported, please disable the custom domain first.', 'tumblr-importer' ) . '">' . __( 'Custom Domain', 'tumblr-importer' ) . '</span></nobr>';
+					$submit         = '<nobr><img src="' . admin_url( 'images/no.png' ) . '" style="vertical-align:top; padding: 0 4px;" alt="' . __( 'Tumblr Blogs with Custom Domains activated cannot be imported, please disable the custom domain first.', 'tumblr-importer' ) . '" title="' . __( 'Tumblr Blogs with Custom Domains activated cannot be imported, please disable the custom domain first.', 'tumblr-importer' ) . '" /><span style="cursor: pointer;" title="' . __( 'Tumblr Blogs with Custom Domains activated cannot be imported, please disable the custom domain first.', 'tumblr-importer' ) . '">' . __( 'Custom Domain', 'tumblr-importer' ) . '</span></nobr>';
 					$custom_domains = true;
 				}
 
+                // Build an author selector / static name depending on number
 				if ( 1 == count( $authors ) ) {
 					$author_selection = "<input type='hidden' value='" . esc_attr( $authors[0]->ID ) . "' name='post_author' />" . esc_html( $authors[0]->display_name );
 				} else {
-					$args = [
+					$args = array(
 						'who'  => 'authors',
 						'name' => 'post_author',
 						'echo' => false,
-					];
+					);
 					if ( isset( $this->blog[ $url ]['post_author'] ) ) {
 						$args['selected'] = $this->blog[ $url ]['post_author'];
 					}
@@ -363,25 +368,25 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 				$output .= "<tr class='" . esc_attr( $style ) . "'><form action='?import=tumblr' method='post'>";
 				$output .= wp_nonce_field( 'tumblr-import', '_wpnonce', true, false );
 				$output .= "<input type='hidden' name='blogurl' value='" . esc_attr( $blog['url'] ) . "' />";
-				$output .= "<td>" . esc_html( $blog['title'] ) . "</td>";
-				$output .= "<td>" . esc_html( $blog['url'] ) . "</td>";
-				$output .= "<td>" . esc_html( $this->blog[ $url ]['posts_complete'] . ' / ' . $this->blog[ $url ]['total_posts'] ) . "</td>";
-				$output .= "<td>" . esc_html( $this->blog[ $url ]['drafts_complete'] . ' / ' . $this->blog[ $url ]['total_drafts'] ) . "</td>";
-				$output .= "<td>" . esc_html( $this->blog[ $url ]['queued_complete'] . ' / ' . $this->blog[ $url ]['total_queued'] ) . "</td>";
-				$output .= "<td>" . esc_html( $this->blog[ $url ]['pages_complete'] ) . "</td>";
-				$output .= "<td>" . $author_selection . "</td>";
-				$output .= "<td>" . $submit . "</td>";
-				$output .= "</form></tr>";
+				$output .= '<td>' . esc_html( $blog['title'] ) . '</td>';
+				$output .= '<td>' . esc_html( $blog['url'] ) . '</td>';
+				$output .= '<td>' . esc_html( $this->blog[ $url ]['posts_complete'] . ' / ' . $this->blog[ $url ]['total_posts'] ) . '</td>';
+				$output .= '<td>' . esc_html( $this->blog[ $url ]['drafts_complete'] . ' / ' . $this->blog[ $url ]['total_drafts'] ) . '</td>';
+				$output .= '<td>' . esc_html( $this->blog[ $url ]['queued_complete'] . ' / ' . $this->blog[ $url ]['total_queued'] ) . '</td>';
+				$output .= '<td>' . esc_html( $this->blog[ $url ]['pages_complete'] ) . '</td>';
+				$output .= '<td>' . $author_selection . '</td>';
+				$output .= '<td>' . $submit . '</td>';
+				$output .= '</form></tr>';
 			}
 
-			$output .= "</tbody></table>";
+			$output .= '</tbody></table>';
 
 			if ( $custom_domains ) {
-				$output .= "<p><strong>" . esc_html__( 'As one or more of your Tumblr blogs has a Custom Domain mapped to it. If you would like to import one of these sites you will need to temporarily remove the custom domain mapping and clear the account information from the importer to import. Once the import is completed you can re-enable the custom domain for your site.', 'tumblr-importer' ) . "</strong></p>";
+				$output .= '<p><strong>' . esc_html__( 'As one or more of your Tumblr blogs has a Custom Domain mapped to it. If you would like to import one of these sites you will need to temporarily remove the custom domain mapping and clear the account information from the importer to import. Once the import is completed you can re-enable the custom domain for your site.', 'tumblr-importer' ) . '</strong></p>';
 			}
 
-			$output .= "<p>" . esc_html__( "Importing your Tumblr blog can take a while so the importing process happens in the background and you may not see immediate results here. Come back to this page later to check on the importer's progress.", 'tumblr-importer' ) . "</p>";
-			$output .= "</div>";
+			$output .= '<p>' . esc_html__( "Importing your Tumblr blog can take a while so the importing process happens in the background and you may not see immediate results here. Come back to this page later to check on the importer's progress.", 'tumblr-importer' ) . '</p>';
+			$output .= '</div>';
 
 			return $output;
 		}
@@ -393,9 +398,9 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 		 * @return void
 		 */
 		public function instructions() {
-			$output = '';
-			$output .= "<p>" . esc_html__( 'Please select the Tumblr blog you would like to import into your WordPress site and then click on the "Import this Blog" button to continue.', 'tumblr-importer' ) . "</p>";
-			$output .= "<p>" . esc_html__( 'If your import gets stuck for a long time or you would like to import from a different Tumblr account instead then click on the "Clear account information" button below to reset the importer.', 'tumblr-importer' ) . "</p>";
+			$output  = '';
+			$output .= '<p>' . esc_html__( 'Please select the Tumblr blog you would like to import into your WordPress site and then click on the "Import this Blog" button to continue.', 'tumblr-importer' ) . '</p>';
+			$output .= '<p>' . esc_html__( 'If your import gets stuck for a long time or you would like to import from a different Tumblr account instead then click on the "Clear account information" button below to reset the importer.', 'tumblr-importer' ) . '</p>';
 			return $output;
 		}
 
@@ -431,7 +436,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 				delete_option( get_class( $this ) );
 
 				$found_blog = false;
-				$blog_data  = [];
+				$blog_data  = array();
 
 				foreach ( $this->blogs as $blog_data ) {
 					if ( $blog_data['url'] === $url ) {
@@ -455,7 +460,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 				$this->blog[ $url ]['name']            = $blog_data['name'];
 			}
 
-			$this->blog[ $url ]['progress']    = 'start';
+			$this->blog[ $url ]['progress'] = 'start';
 
 			if ( isset( $_POST['post_author'] ) ) {
 				$this->blog[ $url ]['post_author'] = (int) $_POST['post_author'];
@@ -526,7 +531,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 							$_max_progress    = $this->blog[ $url ]['total_queued'];
 							$_progress_before = $this->blog[ $url ]['queued_complete'];
 							do_action( 'tumblr_importer_do_queued_import_before', $url );
-							$this->do_queued_import($url);
+							$this->do_queued_import( $url );
 							do_action( 'tumblr_importer_do_queued_import_after', $url );
 							$_progress_after = $this->blog[ $url ]['queued_complete'];
 							break;
@@ -920,7 +925,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 		 * @return int|WP_Error
 		 */
 		public function handle_sideload_import( $post, $source, $description = '', $filename = false ) {
-			$file_array = [];
+			$file_array = array();
 			// Make a HEAD request to get the filename:
 			if ( empty( $filename ) ) {
 				$head = wp_remote_request( $source, array( 'method' => 'HEAD' ) );
@@ -946,7 +951,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 				return $tmp;
 			}
 
-			$file_array['name'] = ! empty( $filename ) ? $filename : basename( $tmp );
+			$file_array['name']     = ! empty( $filename ) ? $filename : basename( $tmp );
 			$file_array['tmp_name'] = $tmp;
 			// do the validation and storage stuff
 
@@ -1020,10 +1025,10 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 					return $id;
 				}
 
-				$link = ! empty( $post['media']['link'] ) ? $post['media']['link'] : null;
-				$post_content = $post['post_content'];
-				$post['post_content'] = get_image_send_to_editor( $id, (string) $post['post_title'], (string) $post['post_title'], 'none', $link, true, 'full' );
-				$post['post_content'] .= $post_content;
+				$link                        = ! empty( $post['media']['link'] ) ? $post['media']['link'] : null;
+				$post_content                = $post['post_content'];
+				$post['post_content']        = get_image_send_to_editor( $id, (string) $post['post_title'], (string) $post['post_title'], 'none', $link, true, 'full' );
+				$post['post_content']       .= $post_content;
 				$post['meta']['attribution'] = $link;
 
 				$this->handle_sideload_post_update( $post );
@@ -1069,8 +1074,8 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 					return $id;
 				}
 
-				$link = wp_get_attachment_link( $id ) . "\n" . $post['post_content'];
-				$post['post_content'] = $link;
+				$link                        = wp_get_attachment_link( $id ) . "\n" . $post['post_content'];
+				$post['post_content']        = $link;
 				$post['meta']['attribution'] = $link;
 			} else {
 				preg_match( '/(http[^ "<>\']+)/', $post['post_content'], $matches );
@@ -1237,11 +1242,11 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 				$post['post_date_gmt'] = gmdate( 'Y-m-d H:i:s', strtotime( (string) $tpost->date ) );
 				$post['post_name']     = (string) $tpost->slug;
 
-				if('queued' === $tpost->state) {
-					$post['post_status'] = 'future';
-					$blog_timezone_offset = get_option('gmt_offset');
-					$scheduled_time = (int) $tpost->scheduled_publish_time + ($blog_timezone_offset * 3600);
-					$post['post_date'] = gmdate( 'Y-m-d H:i:s', $scheduled_time );
+				if ( 'queued' === $tpost->state ) {
+					$post['post_status']   = 'future';
+					$blog_timezone_offset  = get_option( 'gmt_offset' );
+					$scheduled_time        = (int) $tpost->scheduled_publish_time + ( $blog_timezone_offset * 3600 );
+					$post['post_date']     = gmdate( 'Y-m-d H:i:s', $scheduled_time );
 					$post['post_date_gmt'] = get_gmt_from_date( $post['post_date'] );
 				}
 
