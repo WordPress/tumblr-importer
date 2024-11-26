@@ -112,7 +112,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 		/**
 		 * Displays the saved info screen.
 		 *
-		 * @return void
+		 * @return string
 		 */
 		public function saved_info_display() {
 			$output_html  = '<p>';
@@ -130,6 +130,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 			$output_html .= '" name="restart" />';
 			$output_html .= '</p>';
 			$output_html .= '</form>';
+
 			return $output_html;
 		}
 
@@ -138,7 +139,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 		 *
 		 * @param string $error Optional error message.
 		 *
-		 * @return void
+		 * @return string
 		 */
 		public function greet( $error = null ) {
 			$output = '';
