@@ -146,21 +146,21 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 			if ( ! empty( $error ) ) {
 				return "<div class='error'><p>" . esc_html( $error ) . '</p></div>';
 			}
-		
+
 			$output .= "<div class='wrap'>";
-		
+
 			if ( version_compare( get_bloginfo( 'version' ), '3.8.0', '<' ) ) {
 				// phpcs:ignore WordPress.WP.DeprecatedFunctions
 				$output .= get_screen_icon(); // Behind a version check.
 			}
-		
+
 			$output .= "<h2>" . esc_html__( 'Import Tumblr', 'tumblr-importer' ) . "</h2>";
-		
+
 			if ( empty( $this->request_tokens ) ) {
 				$output .= "<p>" . esc_html__( 'Howdy! This importer allows you to import posts from your Tumblr account into your WordPress site.', 'tumblr-importer' ) . "</p>";
 				$output .= "<p>" . esc_html__( "First, you will need to create an 'app' on Tumblr. The app provides a connection point between your blog and Tumblr's servers.", 'tumblr-importer' ) . "</p>";
 				$output .= "<p>" . esc_html__( 'To create an app, visit this page:', 'tumblr-importer' ) . " <a href='https://www.tumblr.com/oauth/apps'>https://www.tumblr.com/oauth/apps</a></p>";
-		
+
 				$output .= "<ol>";
 				$output .= "<li>" . esc_html__( 'Click the large green "Register Application" button.', 'tumblr-importer' ) . "</li>";
 				$output .= "<li>" . esc_html__( 'You need to fill in the "Application Name", "Application Website", and "Default Callback URL" fields. All the rest can be left blank.', 'tumblr-importer' ) . "</li>";
@@ -168,35 +168,35 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 				$output .= '<strong>' . esc_url( home_url() ) . '</strong></li>';
 				$output .= "<li>" . wp_kses( __( 'Note: It is important that you put in that URL <em>exactly as given</em>.', 'tumblr-importer' ), array( 'em' => array() ) ) . "</li>";
 				$output .= "</ol>";
-		
+
 				$output .= "<p>" . esc_html__( 'After creating the application, copy and paste the "OAuth Consumer Key" and "Secret Key" into the given fields below.', 'tumblr-importer' ) . "</p>";
-		
+
 				$output .= "<form action='?import=tumblr' method='post'>";
 				$output .= wp_nonce_field( 'tumblr-import', '_wpnonce', true, false );
 				$output .= "<table class='form-table'>";
-		
+
 				$output .= "<tr><th scope='row'><label for='consumerkey'>" . esc_html__( 'OAuth Consumer Key:', 'tumblr-importer' ) . "</label></th>";
 				$output .= "<td><input type='text' class='regular-text' name='consumerkey' value='" . ( isset( $this->consumerkey ) ? esc_attr( $this->consumerkey ) : '' ) . "' /></td></tr>";
-		
+
 				$output .= "<tr><th scope='row'><label for='secretkey'>" . esc_html__( 'Secret Key:', 'tumblr-importer' ) . "</label></th>";
 				$output .= "<td><input type='text' class='regular-text' name='secretkey' value='" . ( isset( $this->secretkey ) ? esc_attr( $this->secretkey ) : '' ) . "' /></td></tr>";
-		
+
 				$output .= "</table>";
 				$output .= "<p class='submit'><input type='submit' class='button' value='" . esc_attr__( 'Connect to Tumblr', 'tumblr-importer' ) . "' /></p>";
 				$output .= "</form>";
-		
+
 			} else {
 				$output .= "<p>" . esc_html__( 'Everything seems to be in order, so now you need to tell Tumblr to allow the plugin to access your account.', 'tumblr-importer' ) . "</p>";
 				$output .= "<p>" . esc_html__( "To do this, click the Authorize link below. You will be redirected back to this page when you've granted the permission.", 'tumblr-importer' ) . "</p>";
 				$output .= "<p><a href='" . esc_url_raw( $this->authorize_url ) . "'>" . esc_html__( 'Authorize the Application', 'tumblr-importer' ) . "</a></p>";
 			}
-		
+
 			$output .= "</div>";
-		
+
 			return $output;
 		}
-	
-		
+
+
 		/**
 		 * Checks the credentials.
 		 *
@@ -280,44 +280,45 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 		 */
 		public function show_blogs( $error = null ) {
 			$output = '';
-		
+
 			if ( ! empty( $error ) ) {
 				$output .= "<div class='error'><p>" . esc_html( $error ) . '</p></div>';
 			}
-		
+
 			$authors = get_users( version_compare( get_bloginfo( 'version' ), '5.9.0', '<' ) ? array( 'who' => 'authors' ) : array( 'capability' => 'edit_posts' ) );
-		
+
 			$output .= "<div class='wrap'>";
-		
+
 			if ( version_compare( get_bloginfo( 'version' ), '3.8.0', '<' ) ) {
 				// phpcs:ignore WordPress.WP.DeprecatedFunctions
 				$output .= screen_icon(); // Behind a version check.
 			}
-		
+
 			$output .= "<h2>" . esc_html__( 'Import Tumblr', 'tumblr-importer' ) . "</h2>";
 			$output .= do_action( 'tumblr_importer_import_instructions' );
-		
+
 			if ( 1 < count( $authors ) ) {
 				$output .= "<p>" . esc_html__( 'As Tumblr does not expose the "author", even from multi-author blogs you will need to select which WordPress user will be listed as the author of the imported posts.', 'tumblr-importer' ) . "</p>";
 			}
-		
+
 			$output .= "<table class='widefat' cellspacing='0'><thead><tr>";
 			$output .= "<th>" . esc_html__( 'Tumblr Blog', 'tumblr-importer' ) . "</th>";
 			$output .= "<th>" . esc_html__( 'URL', 'tumblr-importer' ) . "</th>";
 			$output .= "<th>" . esc_html__( 'Posts Imported', 'tumblr-importer' ) . "</th>";
 			$output .= "<th>" . esc_html__( 'Drafts Imported', 'tumblr-importer' ) . "</th>";
+            $output .= "<th>" . esc_html__( 'Queued Imported', 'tumblr-importer' ) . "</th>";
 			$output .= "<th>" . esc_html__( 'Pages Imported', 'tumblr-importer' ) . "</th>";
 			$output .= "<th>" . esc_html__( 'Author', 'tumblr-importer' ) . "</th>";
 			$output .= "<th>" . esc_html__( 'Action/Status', 'tumblr-importer' ) . "</th>";
 			$output .= "</tr></thead><tbody>";
-		
+
 			$style = '';
 			$custom_domains = false;
-		
+
 			foreach ( $this->blogs as $blog ) {
 				$url = $blog['url'];
 				$style = ( 'alternate' == $style ) ? '' : 'alternate';
-		
+
 				if ( ! isset( $this->blog[ $url ] ) ) {
 					$this->blog[ $url ] = [
 						'posts_complete'  => 0,
@@ -330,7 +331,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 						'name'            => $blog['name'],
 					];
 				}
-		
+
 				if ( empty( $this->blog[ $url ]['progress'] ) ) {
 					$submit = "<input type='submit' value='" . esc_attr__( 'Import this blog', 'tumblr-importer' ) . "' />";
 				} elseif ( 'finish' === $this->blog[ $url ]['progress'] ) {
@@ -339,12 +340,12 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 					$submit = '<img src="' . admin_url( 'images/loading.gif' ) . '" style="vertical-align: top; padding: 0 4px;" alt="' . __( 'In Progress', 'tumblr-importer' ) . '" title="' . __( 'In Progress', 'tumblr-importer' ) . '" /><span>' . __( 'In Progress', 'tumblr-importer' ) . '</span>';
 					$submit .= "<script type='text/javascript'>setTimeout( 'window.location.href = window.location.href', 15000);</script>";
 				}
-		
+
 				if ( ! preg_match( '|tumblr.com/|', $url ) ) {
 					$submit = '<nobr><img src="' . admin_url( 'images/no.png' ) . '" style="vertical-align:top; padding: 0 4px;" alt="' . __( 'Tumblr Blogs with Custom Domains activated cannot be imported, please disable the custom domain first.', 'tumblr-importer' ) . '" title="' . __( 'Tumblr Blogs with Custom Domains activated cannot be imported, please disable the custom domain first.', 'tumblr-importer' ) . '" /><span style="cursor: pointer;" title="' . __( 'Tumblr Blogs with Custom Domains activated cannot be imported, please disable the custom domain first.', 'tumblr-importer' ) . '">' . __( 'Custom Domain', 'tumblr-importer' ) . '</span></nobr>';
 					$custom_domains = true;
 				}
-		
+
 				if ( 1 == count( $authors ) ) {
 					$author_selection = "<input type='hidden' value='" . esc_attr( $authors[0]->ID ) . "' name='post_author' />" . esc_html( $authors[0]->display_name );
 				} else {
@@ -358,7 +359,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 					}
 					$author_selection = wp_dropdown_users( $args );
 				}
-		
+
 				$output .= "<tr class='" . esc_attr( $style ) . "'><form action='?import=tumblr' method='post'>";
 				$output .= wp_nonce_field( 'tumblr-import', '_wpnonce', true, false );
 				$output .= "<input type='hidden' name='blogurl' value='" . esc_attr( $blog['url'] ) . "' />";
@@ -366,25 +367,26 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 				$output .= "<td>" . esc_html( $blog['url'] ) . "</td>";
 				$output .= "<td>" . esc_html( $this->blog[ $url ]['posts_complete'] . ' / ' . $this->blog[ $url ]['total_posts'] ) . "</td>";
 				$output .= "<td>" . esc_html( $this->blog[ $url ]['drafts_complete'] . ' / ' . $this->blog[ $url ]['total_drafts'] ) . "</td>";
+				$output .= "<td>" . esc_html( $this->blog[ $url ]['queued_complete'] . ' / ' . $this->blog[ $url ]['total_queued'] ) . "</td>";
 				$output .= "<td>" . esc_html( $this->blog[ $url ]['pages_complete'] ) . "</td>";
 				$output .= "<td>" . $author_selection . "</td>";
 				$output .= "<td>" . $submit . "</td>";
 				$output .= "</form></tr>";
 			}
-		
+
 			$output .= "</tbody></table>";
-		
+
 			if ( $custom_domains ) {
 				$output .= "<p><strong>" . esc_html__( 'As one or more of your Tumblr blogs has a Custom Domain mapped to it. If you would like to import one of these sites you will need to temporarily remove the custom domain mapping and clear the account information from the importer to import. Once the import is completed you can re-enable the custom domain for your site.', 'tumblr-importer' ) . "</strong></p>";
 			}
-		
+
 			$output .= "<p>" . esc_html__( "Importing your Tumblr blog can take a while so the importing process happens in the background and you may not see immediate results here. Come back to this page later to check on the importer's progress.", 'tumblr-importer' ) . "</p>";
 			$output .= "</div>";
-		
+
 			return $output;
 		}
-		
-	
+
+
 		/**
 		 * Displays the instructions.
 		 *
@@ -521,9 +523,12 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 							$_progress_after = $this->blog[ $url ]['drafts_complete'];
 							break;
 						case 'queued':
-							// TODO Tumblr's API is broken for queued posts
-							$this->blog[ $url ]['progress'] = 'pages';
-							// $this->do_queued_import($url);
+							$_max_progress    = $this->blog[ $url ]['total_queued'];
+							$_progress_before = $this->blog[ $url ]['queued_complete'];
+							do_action( 'tumblr_importer_do_queued_import_before', $url );
+							$this->do_queued_import($url);
+							do_action( 'tumblr_importer_do_queued_import_after', $url );
+							$_progress_after = $this->blog[ $url ]['queued_complete'];
 							break;
 						case 'pages':
 							// TODO Tumblr's new API has no way to retrieve pages that I can find
@@ -655,7 +660,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 		}
 
 		/**
-		 * Gets the draft post type.
+		 * Gets the draft post type. This is Tumblr's Post Type, not WordPress.
 		 *
 		 * @param string $post_type The post type.
 		 *
@@ -663,6 +668,17 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 		 */
 		public function get_draft_post_type( $post_type ) {
 			return 'draft';
+		}
+
+		/**
+		 * Gets the post type for queued posts. This is Tumblr's Post Type, not WordPress.
+		 *
+		 * @param string $post_type The post type.
+		 *
+		 * @return string
+		 */
+		public function get_queued_post_type( $post_type ) {
+			return 'queue';
 		}
 
 		/**
@@ -714,7 +730,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 					$post['post_author'] = $this->blog[ $url ]['post_author'];
 
 					do_action( 'tumblr_importing_post', $post );
-					$id = wp_insert_post( $post );
+					$id = wp_insert_post( $post, false, false );
 					if ( ! is_wp_error( $id ) ) {
 						$post['ID'] = $id;
 						if ( isset( $post['format'] ) ) {
@@ -728,6 +744,75 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 					}
 
 					++$this->blog[ $url ]['drafts_complete'];
+					$this->save_vars();
+				} while ( false != ( $post = next( $imported_posts ) ) && $this->have_time() );
+			}
+		}
+
+		/**
+		 * Performs the queued posts import.
+		 *
+		 * @param string $url The URL of the blog to import.
+		 *
+		 * @return void
+		 */
+		public function do_queued_import( $url ) {
+			$start = $this->blog[ $url ]['queued_complete'];
+			$total = $this->blog[ $url ]['total_queued'];
+
+			// check for posts completion
+			if ( $start >= $total ) {
+				$this->blog[ $url ]['progress'] = 'pages';
+				return;
+			}
+
+			// get the already imported posts to prevent dupes
+			$this->dupes = $this->get_imported_posts( 'tumblr', $this->blog[ $url ]['name'] );
+
+			if ( $this->blog[ $url ]['posts_complete'] + TUMBLR_MAX_IMPORT > $total ) {
+				$count = $total - $start;
+			} else {
+				$count = TUMBLR_MAX_IMPORT;
+			}
+
+			add_filter( 'tumblr_post_type', array( $this, 'get_queued_post_type' ) );
+			$imported_posts = $this->fetch_posts( $url, $start, $count, $this->email, $this->password, 'queue' );
+
+			if ( empty( $imported_posts ) ) {
+				$this->error = __( 'Problem communicating with Tumblr, retrying later', 'tumblr-importer' );
+				return;
+			}
+
+			if ( is_array( $imported_posts ) && ! empty( $imported_posts ) ) {
+				reset( $imported_posts );
+				$post = current( $imported_posts );
+				do {
+					// skip dupes
+					if ( ! empty( $this->dupes[ $post['tumblr_url'] ] ) ) {
+						++$this->blog[ $url ]['queued_complete'];
+						$this->save_vars();
+						continue;
+					}
+
+					$post['post_status'] = 'future'; // TODO: Use Queued if the Post Queue is implemented
+					$post['post_author'] = $this->blog[ $url ]['post_author'];
+
+					do_action( 'tumblr_importing_post', $post );
+
+					$id = wp_insert_post( $post, false, false );
+					if ( ! is_wp_error( $id ) ) {
+						$post['ID'] = $id;
+						if ( isset( $post['format'] ) ) {
+							set_post_format( $id, $post['format'] );
+						}
+
+						add_post_meta( $id, 'tumblr_' . $this->blog[ $url ]['name'] . '_permalink', $post['tumblr_url'] );
+						add_post_meta( $id, 'tumblr_' . $this->blog[ $url ]['name'] . '_id', $post['tumblr_id'] );
+
+						$this->handle_sideload( $post );
+					}
+
+					++$this->blog[ $url ]['queued_complete'];
 					$this->save_vars();
 				} while ( false != ( $post = next( $imported_posts ) ) && $this->have_time() );
 			}
@@ -1151,6 +1236,15 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 				$post['post_date']     = gmdate( 'Y-m-d H:i:s', strtotime( (string) $tpost->date ) );
 				$post['post_date_gmt'] = gmdate( 'Y-m-d H:i:s', strtotime( (string) $tpost->date ) );
 				$post['post_name']     = (string) $tpost->slug;
+
+				if('queued' === $tpost->state) {
+					$post['post_status'] = 'future';
+					$blog_timezone_offset = get_option('gmt_offset');
+					$scheduled_time = (int) $tpost->scheduled_publish_time + ($blog_timezone_offset * 3600);
+					$post['post_date'] = gmdate( 'Y-m-d H:i:s', $scheduled_time );
+					$post['post_date_gmt'] = get_gmt_from_date( $post['post_date'] );
+				}
+
 				if ( 'private' === $tpost->state ) {
 					$post['private'] = (string) $tpost->state;
 				}
