@@ -91,9 +91,9 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 				$this->start_blog_import();
 			}
 			if ( isset( $this->blogs ) ) {
-				echo $this->show_blogs( $this->error );
+				echo wp_kses( $this->show_blogs( $this->error ) );
 			} else {
-				echo $this->greet( $this->error );
+				echo wp_kses( $this->greet( $this->error ) );
 			}
 
 			unset( $this->error );
@@ -105,7 +105,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 			}
 
 			if ( $saved && ! isset( $_GET['noheader'] ) ) {
-				echo $this->saved_info_display();
+				echo wp_kses( $this->saved_info_display() );
 			}
 		}
 
@@ -337,20 +337,20 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 				} elseif ( 'finish' === $this->blog[ $url ]['progress'] ) {
 					$submit = '<img src="' . esc_url( admin_url( 'images/yes.png' ) ) . '" style="vertical-align: top; padding: 0 4px;" alt="' . esc_attr__( 'Finished!', 'tumblr-importer' ) . '" title="' . esc_attr__( 'Finished!', 'tumblr-importer' ) . '" /><span>' . esc_html__( 'Finished!', 'tumblr-importer' ) . '</span>';
 				} else {
-					$submit  = '<img src="' . admin_url( 'images/loading.gif' ) . '" style="vertical-align: top; padding: 0 4px;" alt="' . __( 'In Progress', 'tumblr-importer' ) . '" title="' . __( 'In Progress', 'tumblr-importer' ) . '" /><span>' . __( 'In Progress', 'tumblr-importer' ) . '</span>';
-                    // Just a little js page reload to show progress if we're in the in-progress phase of the import.
+					$submit = '<img src="' . admin_url( 'images/loading.gif' ) . '" style="vertical-align: top; padding: 0 4px;" alt="' . __( 'In Progress', 'tumblr-importer' ) . '" title="' . __( 'In Progress', 'tumblr-importer' ) . '" /><span>' . __( 'In Progress', 'tumblr-importer' ) . '</span>';
+					// Just a little js page reload to show progress if we're in the in-progress phase of the import.
 					$submit .= "<script type='text/javascript'>setTimeout( 'window.location.href = window.location.href', 15000);</script>";
 				}
 
-                // Check to see if this url is a custom domain. The API doesn't play nicely with these
-                // (intermittently returns 408 status), so make the user disable the custom domain
-                // before importing.
+				// Check to see if this url is a custom domain. The API doesn't play nicely with these
+				// (intermittently returns 408 status), so make the user disable the custom domain
+				// before importing.
 				if ( ! preg_match( '|tumblr.com/|', $url ) ) {
 					$submit         = '<nobr><img src="' . admin_url( 'images/no.png' ) . '" style="vertical-align:top; padding: 0 4px;" alt="' . __( 'Tumblr Blogs with Custom Domains activated cannot be imported, please disable the custom domain first.', 'tumblr-importer' ) . '" title="' . __( 'Tumblr Blogs with Custom Domains activated cannot be imported, please disable the custom domain first.', 'tumblr-importer' ) . '" /><span style="cursor: pointer;" title="' . __( 'Tumblr Blogs with Custom Domains activated cannot be imported, please disable the custom domain first.', 'tumblr-importer' ) . '">' . __( 'Custom Domain', 'tumblr-importer' ) . '</span></nobr>';
 					$custom_domains = true;
 				}
 
-                // Build an author selector / static name depending on number
+				// Build an author selector / static name depending on number
 				if ( 1 == count( $authors ) ) {
 					$author_selection = "<input type='hidden' value='" . esc_attr( $authors[0]->ID ) . "' name='post_author' />" . esc_html( $authors[0]->display_name );
 				} else {
