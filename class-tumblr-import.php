@@ -292,7 +292,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 
 			if ( version_compare( get_bloginfo( 'version' ), '3.8.0', '<' ) ) {
 				// phpcs:ignore WordPress.WP.DeprecatedFunctions
-				$output .= screen_icon(); // Behind a version check.
+				$output .= get_screen_icon(); // Behind a version check.
 			}
 
 			$output .= '<h2>' . esc_html__( 'Import Tumblr', 'tumblr-importer' ) . '</h2>';
