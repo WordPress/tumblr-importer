@@ -91,9 +91,9 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 				$this->start_blog_import();
 			}
 			if ( isset( $this->blogs ) ) {
-				echo wp_kses( $this->show_blogs( $this->error ) );
+				echo $this->show_blogs( $this->error );
 			} else {
-				echo wp_kses( $this->greet( $this->error ) );
+				echo $this->greet( $this->error );
 			}
 
 			unset( $this->error );
@@ -105,7 +105,7 @@ if ( class_exists( 'WP_Importer_Cron' ) ) {
 			}
 
 			if ( $saved && ! isset( $_GET['noheader'] ) ) {
-				echo wp_kses( $this->saved_info_display() );
+				echo $this->saved_info_display();
 			}
 		}
 
