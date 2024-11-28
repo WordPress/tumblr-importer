@@ -1,0 +1,84 @@
+{
+    "packages": [
+        {
+            "name": "cupcacke-labs/redvelvet-lib",
+            "version": "dev-main",
+            "version_normalized": "dev-main",
+            "source": {
+                "type": "git",
+                "url": "git@github.a8c.com:Automattic/redvelvet-lib.git",
+                "reference": "9781202e3b4c7cc3a1aa5d99274ee7058353267e"
+            },
+            "require": {
+                "ext-dom": "*",
+                "ext-json": "*",
+                "php": "^8.3.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^11.4.4",
+                "symfony/console": "^7.1",
+                "symplify/easy-coding-standard": "^12.3.6"
+            },
+            "time": "2024-11-28T17:04:53+00:00",
+            "default-branch": true,
+            "type": "library",
+            "installation-source": "source",
+            "autoload": {
+                "psr-4": {
+                    "CupcakeLabs\\RedVelvet\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "CupcakeLabs\\RedVelvet\\Tests\\": "tests/"
+                }
+            },
+            "scripts": {
+                "phpunit": [
+                    "vendor/bin/phpunit"
+                ],
+                "generate-autoloader": [
+                    "@composer dump-autoload -o"
+                ],
+                "packages-install": [
+                    "@composer install --ignore-platform-reqs --no-interaction"
+                ],
+                "check-cs": [
+                    "vendor/bin/ecs check --ansi"
+                ],
+                "fix-cs": [
+                    "vendor/bin/ecs check --fix --ansi"
+                ],
+                "packages-update": [
+                    "@composer clear-cache",
+                    "@composer update --prefer-stable --no-interaction"
+                ],
+                "test": [
+                    "@composer check-cs",
+                    "@composer phpunit"
+                ]
+            },
+            "authors": [
+                {
+                    "name": "Cupcacke Team"
+                },
+                {
+                    "name": "Contributors",
+                    "homepage": "https://github.a8c.com/Automattic/redvelvet-lib/graphs/contributors"
+                }
+            ],
+            "description": "Converter NPF <-> Gutenberg Library",
+            "keywords": [
+                "blocks",
+                "gutenberg",
+                "npf",
+                "php",
+                "tumblr",
+                "wordpress"
+            ],
+            "install-path": "../cupcacke-labs/redvelvet-lib"
+        }
+    ],
+    "dev": false,
+    "dev-package-names": []
+}

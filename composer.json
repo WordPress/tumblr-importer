@@ -1,5 +1,19 @@
 {
+    "name": "automattic/tumblr-importer",
+    "description": "Tumblr Importer is a plugin that imports posts from Tumblr into WordPress.",
+    "license": "GPL-2.0",
+    "type": "wordpress-plugin",
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "git@github.a8c.com:Automattic/redvelvet-lib.git"
+        }
+    ],
+    "require": {
+        "cupcacke-labs/redvelvet-lib": "dev-main"
+    },
     "require-dev": {
+        "roave/security-advisories": "dev-latest",
         "wp-coding-standards/wpcs": "^3.1",
         "phpcompatibility/phpcompatibility-wp": "*"
     },
