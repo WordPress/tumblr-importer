@@ -17,6 +17,11 @@
         "wp-coding-standards/wpcs": "^3.1",
         "phpcompatibility/phpcompatibility-wp": "*"
     },
+    "autoload": {
+        "psr-4": {
+            "Automattic\\TumblrImporter\\": "src/"
+        }
+    },
     "config": {
         "allow-plugins": {
             "dealerdirect/phpcodesniffer-composer-installer": true
