@@ -36,8 +36,6 @@ use Automattic\TumblrImporter\Tumblr_Import;
 
 /** WordPress Import Administration API */
 require_once ABSPATH . 'wp-admin/includes/import.php';
-/** WordPress Admin */
-//require_once ABSPATH . 'wp-admin/includes/admin.php';
 
 if ( ! class_exists( 'WP_Importer' ) ) {
     $class_wp_importer = ABSPATH . 'wp-admin/includes/class-wp-importer.php';
