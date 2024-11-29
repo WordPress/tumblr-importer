@@ -7,6 +7,8 @@
 
 namespace Automattic\TumblrImporter;
 
+use WP_Importer;
+
 defined( 'ABSPATH' ) || exit;
 
 class WP_Importer_Cron extends WP_Importer {

@@ -18,9 +18,9 @@
         "phpcompatibility/phpcompatibility-wp": "*"
     },
     "autoload": {
-        "psr-4": {
-            "Automattic\\TumblrImporter\\": "src/"
-        }
+        "classmap": [
+            "src/"
+        ]
     },
     "config": {
         "allow-plugins": {

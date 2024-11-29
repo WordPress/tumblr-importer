@@ -215,7 +215,7 @@ class Tumblr_Import extends WP_Importer_Cron {
         }
 
         if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
-            $this->error = -tumblr - import . php__('Tumblr returned an error: ', 'tumblr-importer') . wp_remote_retrieve_response_code($response) . ' ' . wp_remote_retrieve_body( $response );
+            $this->error = __('Tumblr returned an error: ', 'tumblr-importer') . wp_remote_retrieve_response_code($response) . ' ' . wp_remote_retrieve_body( $response );
             return;
         }
         // parse the body
@@ -244,7 +244,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 
         $params = array(
             'oauth_consumer_key'     => $this->consumerkey,
-            'oauth_nonce'            => -tumblr - import . phptime() . rand(),
+            'oauth_nonce'            => time() . rand(),
             'oauth_timestamp'        => time(),
             'oauth_token'            => $this->request_tokens['oauth_token'],
             'oauth_signature_method' => 'HMAC-SHA1',
@@ -258,7 +258,7 @@ class Tumblr_Import extends WP_Importer_Cron {
         $response = wp_remote_get( $url );
         unset( $this->request_tokens );
         if ( is_wp_error( $response ) || 200 != wp_remote_retrieve_response_code( $response ) ) {
-            $this->error = -tumblr - import . php__('Tumblr returned an error: ', 'tumblr-importer') . wp_remote_retrieve_response_code($response) . ' ' . wp_remote_retrieve_body( $response );
+            $this->error = __('Tumblr returned an error: ', 'tumblr-importer') . wp_remote_retrieve_response_code($response) . ' ' . wp_remote_retrieve_body( $response );
             return;
         } else {
             $this->access_tokens = array();

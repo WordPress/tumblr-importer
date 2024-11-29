@@ -32,8 +32,19 @@ if ( ! is_file( TUMBLR_IMPORTER_PATH . '/vendor/autoload.php' ) ) {
 }
 require_once TUMBLR_IMPORTER_PATH . '/vendor/autoload.php';
 
-//require_once ABSPATH . 'wp-admin/includes/import.php';
+use Automattic\TumblrImporter\Tumblr_Import;
+
+/** WordPress Import Administration API */
+require_once ABSPATH . 'wp-admin/includes/import.php';
+/** WordPress Admin */
 //require_once ABSPATH . 'wp-admin/includes/admin.php';
+
+if ( ! class_exists( 'WP_Importer' ) ) {
+    $class_wp_importer = ABSPATH . 'wp-admin/includes/class-wp-importer.php';
+    if ( file_exists( $class_wp_importer ) ) {
+        require $class_wp_importer;
+    }
+}
 
 /**
  * Tumblr Importer Initialisation routines
@@ -45,7 +56,8 @@ function tumblr_importer_init() {
 	global $tumblr_import;
 	load_plugin_textdomain( 'tumblr-importer', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
 
-	$tumblr_import = new \Automattic\TumblrImporter\Tumblr_Import();
+	$tumblr_import = new Tumblr_Import();
+
 	register_importer( 'tumblr', __( 'Tumblr', 'tumblr-importer' ), __( 'Import posts from a Tumblr blog.', 'tumblr-importer' ), array( $tumblr_import, 'start' ) );
 	if ( ! defined( 'TUMBLR_MAX_IMPORT' ) ) {
 		define( 'TUMBLR_MAX_IMPORT', 20 );
