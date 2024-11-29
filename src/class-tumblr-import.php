@@ -1,5 +1,4 @@
 <?php
-// no-strict-types
 /**
  * Contains the main class for the Tumblr Importer.
  */
