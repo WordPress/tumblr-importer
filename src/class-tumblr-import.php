@@ -37,10 +37,10 @@ class Tumblr_Import extends WP_Importer_Cron {
     public $dupes = array();
 
     /** @var string */
-    private $email;
+    public $email;
 
     /** @var string */
-    private $password;
+    public $password;
 
     /**
      * Constructor
