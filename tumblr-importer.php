@@ -55,7 +55,6 @@ function tumblr_importer_init() {
 	load_plugin_textdomain( 'tumblr-importer', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
 
 	$tumblr_import = new Tumblr_Import();
-
 	register_importer( 'tumblr', __( 'Tumblr', 'tumblr-importer' ), __( 'Import posts from a Tumblr blog.', 'tumblr-importer' ), array( $tumblr_import, 'start' ) );
 	if ( ! defined( 'TUMBLR_MAX_IMPORT' ) ) {
 		define( 'TUMBLR_MAX_IMPORT', 20 );
