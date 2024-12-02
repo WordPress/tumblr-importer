@@ -11,6 +11,6 @@ composer install --no-dev --optimize-autoloader
 
 # Step 2: Create the zip file
 echo "Creating zip file $ZIP_FILE..."
-zip -r $ZIP_FILE . -x ".*" -x "scripts/*"
+zip -r $ZIP_FILE . -x ".*" -x "scripts/*" -x "*.git*" -x "composer.*" -x "phpcs.xml"
 
 echo "Release process completed successfully!"
