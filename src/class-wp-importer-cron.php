@@ -5,7 +5,7 @@
  * Adds cron based importing functionality to WP_Importer
  */
 
-namespace Automattic\TumblrImporter;
+namespace WordPress\TumblrImporter;
 
 use WP_Importer;
 

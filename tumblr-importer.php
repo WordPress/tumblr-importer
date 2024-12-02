@@ -32,8 +32,6 @@ if ( ! is_file( TUMBLR_IMPORTER_PATH . '/vendor/autoload.php' ) ) {
 }
 require_once TUMBLR_IMPORTER_PATH . '/vendor/autoload.php';
 
-use Automattic\TumblrImporter\Tumblr_Import;
-
 /** WordPress Import Administration API */
 require_once ABSPATH . 'wp-admin/includes/import.php';
 
@@ -43,6 +41,8 @@ if ( ! class_exists( 'WP_Importer' ) ) {
         require $class_wp_importer;
     }
 }
+
+use WordPress\TumblrImporter\Tumblr_Import;
 
 /**
  * Tumblr Importer Initialisation routines

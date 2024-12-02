@@ -3,7 +3,7 @@
  * Contains the main class for the Tumblr Importer.
  */
 
-namespace Automattic\TumblrImporter;
+namespace WordPress\TumblrImporter;
 
 defined( 'ABSPATH' ) || exit;
 
