@@ -42,6 +42,10 @@ if ( ! class_exists( 'WP_Importer' ) ) {
     }
 }
 
+if ( ! defined( 'WP_ADMIN' ) ) {
+    require_once ABSPATH . 'wp-admin/includes/admin.php';
+}
+
 use WordPress\TumblrImporter\Tumblr_Import;
 
 /**
