@@ -1,9 +1,0 @@
-/.wordpress-org
-/.git
-/.github
-
-.distignore
-.gitignore
-
-composer.*
-phpcs.xml
