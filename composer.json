@@ -22,6 +22,11 @@
         }
     },
     "scripts": {
+        "packages-install": "@composer install --ignore-platform-reqs --no-interaction",
+        "packages-update": [
+            "@composer clear-cache",
+            "@composer update --prefer-stable --no-interaction"
+        ],
         "format:php": "phpcbf --standard=./.phpcs.xml --basepath=. . -v",
         "lint:php": "phpcs --runtime-set ignore_warnings_on_exit true --standard=./.phpcs.xml --basepath=. . -v"
     }
