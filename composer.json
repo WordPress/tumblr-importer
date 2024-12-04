@@ -1,7 +1,7 @@
 {
     "name": "wordpress/tumblr-importer",
     "description": "Tumblr Importer is a plugin that imports posts from Tumblr into WordPress.",
-    "license": "GPL-2.0",
+    "license": "GPL-2.0-or-later",
     "type": "wordpress-plugin",
     "require": {
         "php": ">=5.6"
@@ -22,6 +22,11 @@
         }
     },
     "scripts": {
+        "packages-install": "@composer install --ignore-platform-reqs --no-interaction",
+        "packages-update": [
+            "@composer clear-cache",
+            "@composer update --prefer-stable --no-interaction"
+        ],
         "format:php": "phpcbf --standard=./.phpcs.xml --basepath=. . -v",
         "lint:php": "phpcs --runtime-set ignore_warnings_on_exit true --standard=./.phpcs.xml --basepath=. . -v"
     }
