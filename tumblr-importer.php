@@ -20,15 +20,15 @@ define( 'TUMBLR_IMPORTER_PATH', plugin_dir_path( __FILE__ ) );
 
 // Load the autoloader.
 if ( ! is_file( TUMBLR_IMPORTER_PATH . '/vendor/autoload.php' ) ) {
-    add_action(
-        'admin_notices',
-        static function () {
-            $message      = __( 'It seems like <strong>Tumblr Importer</strong> is corrupted. Please reinstall!', 'tumblr-importer' );
-            $html_message = wp_sprintf( '<div class="error notice tumblr-importer-error">%s</div>', wpautop( $message ) );
-            echo wp_kses_post( $html_message );
-        }
-    );
-    return;
+	add_action(
+		'admin_notices',
+		static function () {
+			$message      = __( 'It seems like <strong>Tumblr Importer</strong> is corrupted. Please reinstall!', 'tumblr-importer' );
+			$html_message = wp_sprintf( '<div class="error notice tumblr-importer-error">%s</div>', wpautop( $message ) );
+			echo wp_kses_post( $html_message );
+		}
+	);
+	return;
 }
 require_once TUMBLR_IMPORTER_PATH . '/vendor/autoload.php';
 
@@ -36,14 +36,14 @@ require_once TUMBLR_IMPORTER_PATH . '/vendor/autoload.php';
 require_once ABSPATH . 'wp-admin/includes/import.php';
 
 if ( ! class_exists( 'WP_Importer' ) ) {
-    $class_wp_importer = ABSPATH . 'wp-admin/includes/class-wp-importer.php';
-    if ( file_exists( $class_wp_importer ) ) {
-        require $class_wp_importer;
-    }
+	$class_wp_importer = ABSPATH . 'wp-admin/includes/class-wp-importer.php';
+	if ( file_exists( $class_wp_importer ) ) {
+		require $class_wp_importer;
+	}
 }
 
 if ( ! defined( 'WP_ADMIN' ) ) {
-    require_once ABSPATH . 'wp-admin/includes/admin.php';
+	require_once ABSPATH . 'wp-admin/includes/admin.php';
 }
 
 use WordPress\TumblrImporter\Tumblr_Import;
