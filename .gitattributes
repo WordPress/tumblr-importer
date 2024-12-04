@@ -2,9 +2,6 @@
 /.wordpress-org export-ignore
 /.github export-ignore
 
-# Currently only used for linting.
-/vendor export-ignore
-
 # Files
 /.gitattributes export-ignore
 /.gitignore export-ignore
