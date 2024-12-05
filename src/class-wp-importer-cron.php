@@ -11,9 +11,9 @@ use WP_Importer;
 
 defined( 'ABSPATH' ) || exit;
 
-if ( class_exists( 'WP_Importer_Cron' ) ) :
+if ( class_exists( 'WP_Importer_Cron' ) ) {
 	return;
-endif;
+}
 
 class WP_Importer_Cron extends WP_Importer {
 
