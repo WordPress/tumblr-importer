@@ -53,7 +53,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 
 		parent::__construct();
 
-		add_action( 'tumblr_importer_import_instructions', array( $this, 'instructions' ) );
+		add_filter( 'tumblr_importer_import_instructions', array( $this, 'instructions' ) );
 
 		$this->tumblr_importer_init();
 	}
@@ -311,7 +311,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 		}
 
 		$output .= '<h2>' . esc_html__( 'Import Tumblr', 'tumblr-importer' ) . '</h2>';
-		$output .= do_action( 'tumblr_importer_import_instructions' );
+		$output .= apply_filters( 'tumblr_importer_import_instructions', '' );
 
 		if ( 1 < count( $authors ) ) {
 			$output .= '<p>' . esc_html__( 'As Tumblr does not expose the "author", even from multi-author blogs you will need to select which WordPress user will be listed as the author of the imported posts.', 'tumblr-importer' ) . '</p>';
