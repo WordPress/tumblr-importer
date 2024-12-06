@@ -389,7 +389,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 			$output .= '<td>' . esc_html( $this->blog[ $url ]['posts_complete'] . ' / ' . $this->blog[ $url ]['total_posts'] ) . '</td>';
 			$output .= '<td>' . esc_html( $this->blog[ $url ]['drafts_complete'] . ' / ' . $this->blog[ $url ]['total_drafts'] ) . '</td>';
 			$output .= '<td>' . esc_html( $this->blog[ $url ]['queued_complete'] . ' / ' . $this->blog[ $url ]['total_queued'] ) . '</td>';
-			$output .= '<td>' . esc_html( $this->blog[ $url ]['pages_complete'] ) . '</td>';
+			$output .= '<td>' . esc_html( $this->blog[ $url ]['pages_complete'] . ' / ' . $this->blog[ $url ]['total_pages'] ) . '</td>';
 			$output .= '<td>' . $author_selection . '</td>';
 			$output .= '<td>' . $submit . '</td>';
 			$output .= '</form></tr>';
@@ -473,6 +473,7 @@ class Tumblr_Import extends WP_Importer_Cron {
 			$this->blog[ $url ]['total_posts']     = $blog_data['posts'];
 			$this->blog[ $url ]['total_drafts']    = $blog_data['drafts'];
 			$this->blog[ $url ]['total_queued']    = $blog_data['queued'];
+			$this->blog[ $url ]['total_pages']     = $blog_data['pages'];
 			$this->blog[ $url ]['name']            = $blog_data['name'];
 		}
 
@@ -552,9 +553,12 @@ class Tumblr_Import extends WP_Importer_Cron {
 						$_progress_after = $this->blog[ $url ]['queued_complete'];
 						break;
 					case 'pages':
-						// TODO Tumblr's new API has no way to retrieve pages that I can find
-						$this->blog[ $url ]['progress'] = 'finish';
-						// $this->do_pages_import($url);
+						$_max_progress    = $this->blog[ $url ]['total_pages'];
+						$_progress_before = $this->blog[ $url ]['pages_complete'];
+						do_action( 'tumblr_importer_do_pages_import_before', $url );
+						$this->do_pages_import( $url );
+						do_action( 'tumblr_importer_do_pages_import_after', $url );
+						$_progress_after = $this->blog[ $url ]['pages_complete'];
 						break;
 					case 'finish':
 					default:
@@ -848,6 +852,13 @@ class Tumblr_Import extends WP_Importer_Cron {
 	 */
 	public function do_pages_import( $url ) {
 		$start = $this->blog[ $url ]['pages_complete'];
+		$total = $this->blog[ $url ]['total_pages'];
+
+		// check for posts completion
+		if ( $start >= $total ) {
+			$this->blog[ $url ]['progress'] = 'finish';
+			return;
+		}
 
 		// get the already imported posts to prevent dupes
 		$this->dupes = $this->get_imported_posts( 'tumblr', $this->blog[ $url ]['name'] );
@@ -1391,42 +1402,45 @@ class Tumblr_Import extends WP_Importer_Cron {
 	 * @return false|array
 	 */
 	public function fetch_pages( $url, $email = null, $password = null ) {
-		$tumblrurl = trailingslashit( $url ) . 'api/pages';
-		$params    = array(
-			'email'    => $email,
-			'password' => $password,
+		$url = parse_url( $url, PHP_URL_HOST );
+		$url = trailingslashit( "https://api.tumblr.com/v2/blog/$url/pages" );
+
+		do_action( 'tumblr_importer_pre_fetch_pages', $url );
+
+		$params = array(
+			'api_key' => apply_filters( 'tumblr_importer_get_consumer_key', '' ),
 		);
-		$options   = array( 'body' => $params );
+		$url    = add_query_arg( $params, $url );
 
-		// fetch the pages
-		$out = wp_remote_post( $tumblrurl, $options );
-		if ( wp_remote_retrieve_response_code( $out ) !== 200 ) {
-			return false;
-		}
-		$body = wp_remote_retrieve_body( $out );
+		$response = $this->oauth_get_request( $url );
 
-		// parse the XML into something useful
-		$xml = simplexml_load_string( $body );
-
-		if ( ! isset( $xml->pages ) ) {
-			return false;
+		switch ( $response->meta->status ) {
+			case 200: // OK
+				break;
+			default:
+				// translators: %s is the error message from Tumblr.
+				$_error = sprintf( __( 'Tumblr replied with an error: %s', 'tumblr-importer' ), $response->meta->msg );
+				do_action( 'tumblr_importer_handle_error', 'response_' . $response->meta->status );
+				return new WP_Error( 'tumblr_error', $_error );
 		}
 
-		$tpages = $xml->pages;
+		$tpages = $response->response->pages;
 		$pages  = array();
-		foreach ( $tpages->page as $tpage ) {
+		foreach ( $tpages as $tpage ) {
 			$page = array();
-			if ( ! empty( $tpage['title'] ) ) {
-				$page['post_title'] = (string) $tpage['title'];
-			} elseif ( ! empty( $tpage['link-title'] ) ) {
-				$page['post_title'] = (string) $tpage['link-title'];
+			if ( ! empty( $tpage->title ) ) {
+				$page['post_title'] = (string) $tpage->title;
 			} else {
 				$page['post_title'] = '';
 			}
-			$page['post_name']    = str_replace( $url, '', (string) $tpage['url'] );
-			$page['post_content'] = (string) $tpage;
-			$page['tumblr_url']   = (string) $tpage['url'];
-			$pages[]              = $page;
+
+			$page['post_name'] = ltrim( (string) $tpage->path, '/' );
+			$page['post_content'] = (string) $tpage->content;
+
+			$page['post_date']     = gmdate( 'Y-m-d H:i:s', $tpage->updated_at );
+			$page['post_date_gmt'] = gmdate( 'Y-m-d H:i:s', $tpage->updated_at );
+
+			$pages[] = $page;
 		}
 
 		return $pages;
