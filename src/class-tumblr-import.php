@@ -323,7 +323,6 @@ class Tumblr_Import extends WP_Importer_Cron {
 		$output .= '<th>' . esc_html__( 'Posts Imported', 'tumblr-importer' ) . '</th>';
 		$output .= '<th>' . esc_html__( 'Drafts Imported', 'tumblr-importer' ) . '</th>';
 		$output .= '<th>' . esc_html__( 'Queued Imported', 'tumblr-importer' ) . '</th>';
-		$output .= '<th>' . esc_html__( 'Pages Imported', 'tumblr-importer' ) . '</th>';
 		$output .= '<th>' . esc_html__( 'Author', 'tumblr-importer' ) . '</th>';
 		$output .= '<th>' . esc_html__( 'Action/Status', 'tumblr-importer' ) . '</th>';
 		$output .= '</tr></thead><tbody>';
@@ -389,7 +388,6 @@ class Tumblr_Import extends WP_Importer_Cron {
 			$output .= '<td>' . esc_html( $this->blog[ $url ]['posts_complete'] . ' / ' . $this->blog[ $url ]['total_posts'] ) . '</td>';
 			$output .= '<td>' . esc_html( $this->blog[ $url ]['drafts_complete'] . ' / ' . $this->blog[ $url ]['total_drafts'] ) . '</td>';
 			$output .= '<td>' . esc_html( $this->blog[ $url ]['queued_complete'] . ' / ' . $this->blog[ $url ]['total_queued'] ) . '</td>';
-			$output .= '<td>' . esc_html( $this->blog[ $url ]['pages_complete'] ) . '</td>';
 			$output .= '<td>' . $author_selection . '</td>';
 			$output .= '<td>' . $submit . '</td>';
 			$output .= '</form></tr>';
