@@ -29,6 +29,10 @@ Version 0.9 Removes untested warning for the plugin.
 
 == Changelog ==
 
+= 1.2 =
+* Added queued post support
+* Made the importer more extendable with new hooks and filters
+
 = 1.1 =
 * Testing the plugin up to WordPress 6.2
 * Fix Tumblr bug with custom domains
