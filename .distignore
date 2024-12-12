@@ -1,0 +1,10 @@
+/.wordpress-org
+/.git
+/.github
+
+.editorconfig
+.distignore
+.gitignore
+composer.json
+composer.lock
+.phpcs.xml
