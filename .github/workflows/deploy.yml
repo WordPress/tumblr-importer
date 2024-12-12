@@ -12,7 +12,10 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     - name: Build
-      run: composer install --no-dev --optimize-autoloader
+      # 10up/action-wordpress-plugin-deploy is not adding the vendor folder due to .gitignore so we need to add it manually
+      run: |
+        composer install --no-dev --optimize-autoloader
+        git add -f vendor && git commit -m "Add vendor folder"
     - name: WordPress Plugin Deploy
       uses: 10up/action-wordpress-plugin-deploy@stable
       with:
