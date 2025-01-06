@@ -23,10 +23,6 @@ Imports a Tumblr blog into a WordPress blog.
 1. Activate the plugin through the 'Plugins' menu in WordPress.
 1. Go to Tools->Import and use the new importer.
 
-== Upgrade Notice ==
-
-Version 0.9 Removes untested warning for the plugin.
-
 == Changelog ==
 
 = 1.2 =
