@@ -24,7 +24,6 @@ class WP_Importer_Cron extends WP_Importer {
 		// start the clock
 		$this->_importer_started   = time();
 		$this->_max_execution_time = 30; // default to 30 seconds of time on the clock
-		parent::__construct();
 
 		// add the importer schedule
 		add_filter( 'cron_schedules', array( $this, 'importer_schedule' ) );
