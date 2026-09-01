@@ -3,7 +3,7 @@ Contributors: wordpressdotorg, Otto42, dd32, westi, dllh
 Tags: tumblr, import
 Requires at least: 3.2
 Tested up to: 6.7
-Stable tag: 1.2
+Stable tag: 1.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -24,6 +24,9 @@ Imports a Tumblr blog into a WordPress blog.
 1. Go to Tools->Import and use the new importer.
 
 == Changelog ==
+
+= 1.3 =
+* Fix a fatal error during importer initialization caused by calling a constructor that WordPress Core does not define.
 
 = 1.2 =
 * Added queued post support
